@@ -1,14 +1,14 @@
-export const APP_NAME = "Inkyra";
-export const APP_TAGLINE = "Tattoo Design & Booking, Powered by AI";
+export const APP_NAME = 'Inkyra'
+export const APP_TAGLINE = 'Tattoo Design & Booking, Powered by AI'
 
 export const APP_DESCRIPTION_SHORT =
-  "Diseña tu tatuaje con IA, solicita cotización y agenda tu cita. Inkyra: el estudio que empieza con tu idea.";
+  'Diseña tu tatuaje con IA, solicita cotización y agenda tu cita. Inkyra: el estudio que empieza con tu idea.'
 
 export const APP_DESCRIPTION_LONG =
-  "Inkyra es una plataforma de diseño y reserva de tatuajes potenciada por inteligencia artificial. Genera diseños únicos, solicita tu cotización y agenda tu cita en un solo lugar.";
+  'Inkyra es una plataforma de diseño y reserva de tatuajes potenciada por inteligencia artificial. Genera diseños únicos, solicita tu cotización y agenda tu cita en un solo lugar.'
 
 export function getAppCopyright(): string {
-  return `© ${new Date().getFullYear()} ${APP_NAME}. Todos los derechos reservados.`;
+  return `© ${new Date().getFullYear()} ${APP_NAME}. Todos los derechos reservados.`
 }
 
 export const WHATSAPP_TEMPLATES = {
@@ -32,5 +32,5 @@ export const WHATSAPP_TEMPLATES = {
       `Para confirmar tu cita, envíanos el comprobante de pago del adelanto por este mismo chat.`,
       ``,
       `Puedes ver el estado de tu solicitud aquí: ${trackingUrl}`,
-    ].join("\n"),
-};
+    ].join('\n'),
+}

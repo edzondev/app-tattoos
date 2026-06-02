@@ -1,58 +1,42 @@
-import { betterAuth } from "better-auth";
-import { prismaAdapter } from "better-auth/adapters/prisma";
-import { magicLink } from "better-auth/plugins";
-import { nextCookies } from "better-auth/next-js";
-import prisma from "./prisma";
-import { Resend } from "resend";
+import { drizzleAdapter } from '@better-auth/drizzle-adapter'
+import { betterAuth } from 'better-auth'
+import { nextCookies } from 'better-auth/next-js'
+import { magicLink } from 'better-auth/plugins'
+import { Resend } from 'resend'
+import { requiredEnv } from '@/lib/env'
+import { db } from './db'
 
-const resend = new Resend(process.env.RESEND_API_KEY!);
+const resend = new Resend(requiredEnv('RESEND_API_KEY'))
 
 async function sendMagicLinkEmail({
   email,
   url,
 }: {
-  email: string;
-  token: string;
-  url: string;
+  email: string
+  token: string
+  url: string
 }) {
   try {
-    if (process.env.NODE_ENV !== "production") {
-      console.log(
-        [
-          "",
-          "┌─────────────────────────────────────────────────────────┐",
-          "│               ✉  MAGIC LINK (DEV MODE)                  │",
-          "├─────────────────────────────────────────────────────────┤",
-          `│  To : ${email.padEnd(51)}│`,
-          `│  URL: ${url.slice(0, 51).padEnd(51)}│`,
-          url.length > 51 ? `│       ${url.slice(51, 102).padEnd(51)}│` : null,
-          url.length > 102 ? `│       ${url.slice(102).padEnd(51)}│` : null,
-          "└─────────────────────────────────────────────────────────┘",
-          "",
-        ]
-          .filter(Boolean)
-          .join("\n"),
-      );
-      return;
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(url)
+      return
     }
 
     await resend.emails.send({
-      from: "noreply@mail.inkyra.app",
+      from: 'noreply@mail.inkyra.app',
       to: email,
-      subject: "Tu enlace de acceso",
+      subject: 'Tu enlace de acceso',
       html: `<p>Haz clic <a href="${url}">aquí</a> para ingresar al panel.</p>`,
-    });
-    throw new Error(
-      "[auth] sendMagicLinkEmail: no email provider configured for production.",
-    );
+    })
   } catch (e) {
-    console.log("[auth] sendMagicLinkEmail error", e);
+    console.error('[auth] sendMagicLinkEmail error', e)
+    throw e
   }
 }
 
 export const auth = betterAuth({
-  database: prismaAdapter(prisma, {
-    provider: "postgresql",
+  database: drizzleAdapter(db, {
+    provider: 'pg',
   }),
 
   plugins: [
@@ -63,6 +47,6 @@ export const auth = betterAuth({
     }),
     nextCookies(),
   ],
-});
+})
 
-export type Session = typeof auth.$Infer.Session;
+export type Session = typeof auth.$Infer.Session

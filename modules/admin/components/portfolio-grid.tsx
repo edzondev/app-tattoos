@@ -1,44 +1,45 @@
-"use client";
+'use client'
 
-import { Card, CardContent } from "@/modules/core/components/ui/card";
-import { Button } from "@/modules/core/components/ui/button";
-import { STYLE_LABELS } from "@/lib/labels";
-import { Pencil, Trash2, EyeOff } from "lucide-react";
-import type { TattooStyle } from "@/lib/generated/prisma/enums";
+import { EyeOff, Pencil, Trash2 } from 'lucide-react'
+import Image from 'next/image'
+import type { ColorMode, TattooStyle } from '@/lib/db/enums'
+import { STYLE_LABELS } from '@/lib/labels'
+import { Button } from '@/modules/core/components/ui/button'
+import { Card, CardContent } from '@/modules/core/components/ui/card'
 
 export type PortfolioItemWithImages = {
-  id: string;
-  title: string;
-  description: string | null;
-  style: TattooStyle;
-  bodyZone: string | null;
-  colorMode: string;
-  isPublished: boolean;
-  sortOrder: number;
+  id: string
+  title: string
+  description: string | null
+  style: TattooStyle
+  bodyZone: string | null
+  colorMode: ColorMode
+  isPublished: boolean
+  sortOrder: number
   images: {
-    id: string;
-    r2Key: string;
-    publicUrl: string | null;
-    sortOrder: number;
-  }[];
-};
+    id: string
+    r2Key: string
+    publicUrl: string | null
+    sortOrder: number
+  }[]
+}
 
 type Props = {
-  items: PortfolioItemWithImages[];
-  onEdit: (item: PortfolioItemWithImages) => void;
-  onDelete: (item: PortfolioItemWithImages) => void;
-};
+  items: PortfolioItemWithImages[]
+  onEdit: (item: PortfolioItemWithImages) => void
+  onDelete: (item: PortfolioItemWithImages) => void
+}
 
 export default function PortfolioGrid({ items, onEdit, onDelete }: Props) {
   return (
     <div>
       <p className="text-sm text-muted-foreground font-grotesk mb-4">
-        {items.length} {items.length === 1 ? "trabajo" : "trabajos"}
+        {items.length} {items.length === 1 ? 'trabajo' : 'trabajos'}
       </p>
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {items.map((item) => {
-          const thumb = item.images[0];
-          const styleLabel = STYLE_LABELS[item.style] ?? item.style;
+          const thumb = item.images[0]
+          const styleLabel = STYLE_LABELS[item.style] ?? item.style
 
           return (
             <Card
@@ -51,12 +52,15 @@ export default function PortfolioGrid({ items, onEdit, onDelete }: Props) {
                   Oculto
                 </span>
               )}
-              <div className="aspect-square w-full overflow-hidden bg-ink-medium">
+              <div className="relative aspect-square w-full overflow-hidden bg-ink-medium">
                 {thumb?.publicUrl ? (
-                  <img
+                  <Image
                     src={thumb.publicUrl}
                     alt={item.title}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    fill
+                    unoptimized
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center">
@@ -72,7 +76,7 @@ export default function PortfolioGrid({ items, onEdit, onDelete }: Props) {
                 </h3>
                 <p className="text-xs text-muted-foreground font-grotesk">
                   {styleLabel}
-                  {item.bodyZone ? ` — ${item.bodyZone}` : ""}
+                  {item.bodyZone ? ` — ${item.bodyZone}` : ''}
                 </p>
                 <div className="mt-3 flex gap-2">
                   <Button
@@ -95,9 +99,9 @@ export default function PortfolioGrid({ items, onEdit, onDelete }: Props) {
                 </div>
               </CardContent>
             </Card>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

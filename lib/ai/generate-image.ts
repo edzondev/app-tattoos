@@ -1,7 +1,7 @@
-import { generateImage } from "ai";
-import { google } from "@ai-sdk/google";
+import { google } from '@ai-sdk/google'
+import { generateImage } from 'ai'
 
-const MODEL_ID = "gemini-2.5-flash-image";
+const MODEL_ID = 'gemini-2.5-flash-image'
 
 export async function generateImages(prompt: string) {
   const { image } = await generateImage({
@@ -9,7 +9,7 @@ export async function generateImages(prompt: string) {
     prompt,
     aspectRatio: '1:1',
     maxImagesPerCall: 2,
-  });
+  })
 
-  return image.uint8Array;
+  return image.uint8Array
 }

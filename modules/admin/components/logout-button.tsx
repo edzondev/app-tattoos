@@ -1,26 +1,26 @@
-"use client";
+'use client'
 
-import { authClient } from "@/lib/auth-client";
-import { Button } from "@/modules/core/components/ui/button";
-import { useRouter } from "next/navigation";
+import { useRouter } from 'next/navigation'
+import { authClient } from '@/lib/auth-client'
+import { Button } from '@/modules/core/components/ui/button'
 
 export default function LogoutButton() {
-  const router = useRouter();
+  const router = useRouter()
 
   async function handleSignOut() {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/admin/login");
-          router.refresh();
+          router.push('/admin/login')
+          router.refresh()
         },
       },
-    });
+    })
   }
 
   return (
     <Button variant="outline" size="sm" onClick={handleSignOut}>
       Cerrar sesión
     </Button>
-  );
+  )
 }

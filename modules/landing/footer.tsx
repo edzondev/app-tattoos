@@ -1,6 +1,6 @@
-import { MessageCircle } from "lucide-react";
-import Link from "next/link";
-import { APP_NAME, getAppCopyright } from "@/lib/config/brand";
+import { MessageCircle } from 'lucide-react'
+import Link from 'next/link'
+import { APP_NAME, getAppCopyright } from '@/lib/config/brand'
 
 export default function Footer() {
   return (
@@ -63,18 +63,12 @@ export default function Footer() {
               >
                 <MessageCircle size={16} /> WhatsApp
               </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-grotesk"
-              >
+              <span className="text-sm text-muted-foreground font-grotesk">
                 Instagram
-              </a>
-              <a
-                href="#"
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors font-grotesk"
-              >
+              </span>
+              <span className="text-sm text-muted-foreground font-grotesk">
                 Facebook
-              </a>
+              </span>
             </div>
           </div>
         </div>
@@ -84,5 +78,5 @@ export default function Footer() {
         </div>
       </div>
     </footer>
-  );
+  )
 }

@@ -1,91 +1,110 @@
-export const runtime = "nodejs";
+import { eq } from 'drizzle-orm'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { tattooRequest } from '@/lib/db/schema'
+import { withAdmin } from '@/lib/with-admin'
+import { AdminStatusSchema } from '@/modules/schemas/admin'
 
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { withAdmin } from "@/lib/with-admin";
-import { AdminStatusSchema } from "@/modules/schemas/admin";
-import { RequestStatus } from "@/lib/generated/prisma/enums";
-
-const VALID_TRANSITIONS: Record<string, RequestStatus[]> = {
-  [RequestStatus.SENT]: [RequestStatus.QUOTED, RequestStatus.EXPIRED],
-  [RequestStatus.QUOTED]: [
-    RequestStatus.APPOINTMENT_CONFIRMED,
-    RequestStatus.EXPIRED,
-  ],
-  [RequestStatus.APPOINTMENT_CONFIRMED]: [
-    RequestStatus.FINISHED,
-    RequestStatus.EXPIRED,
-  ],
-};
+const VALID_TRANSITIONS: Record<string, string[]> = {
+  '': ['SENT', 'EXPIRED'],
+  SENT: ['QUOTED', 'EXPIRED'],
+  QUOTED: ['APPOINTMENT_CONFIRMED', 'EXPIRED'],
+  APPOINTMENT_CONFIRMED: ['FINISHED', 'EXPIRED'],
+}
 
 export const POST = withAdmin<{ id: string }>(async (req, { params }) => {
-  const { id } = await params;
-
-  const json = await req.json().catch(() => null);
-  const parsed = AdminStatusSchema.safeParse(json);
+  const [{ id }, json] = await Promise.all([
+    params,
+    req.json().catch(() => null),
+  ])
+  const parsed = AdminStatusSchema.safeParse(json)
 
   if (!parsed.success) {
     return NextResponse.json(
-      { error: "invalid_body", details: parsed.error.flatten() },
+      { error: 'invalid_body', details: parsed.error.flatten() },
       { status: 400 },
-    );
+    )
   }
 
-  const tr = await prisma.tattooRequest.findUnique({
-    where: { id },
-    select: { id: true, status: true },
-  });
+  const tr = await db.query.tattooRequest.findFirst({
+    where: eq(tattooRequest.id, id),
+    columns: { id: true, status: true },
+  })
 
   if (!tr) {
-    return NextResponse.json({ error: "not_found" }, { status: 404 });
+    return NextResponse.json({ error: 'not_found' }, { status: 404 })
   }
 
-  const current = tr.status ?? "";
-  const allowed = VALID_TRANSITIONS[current] ?? [];
-  const target = parsed.data.status;
+  const current = tr.status ?? ''
+  const allowed = VALID_TRANSITIONS[current] ?? []
+  const target = parsed.data.status
 
-  if (!allowed.includes(target as RequestStatus)) {
+  if (target === current) {
+    const row = await db.query.tattooRequest.findFirst({
+      where: eq(tattooRequest.id, id),
+      columns: {
+        id: true,
+        status: true,
+        quotedAt: true,
+        depositConfirmedAt: true,
+        appointmentAt: true,
+        finishedAt: true,
+        expiredAt: true,
+        updatedAt: true,
+      },
+    })
+
+    return NextResponse.json(row)
+  }
+
+  if (!allowed.includes(target)) {
     return NextResponse.json(
       {
-        error: "invalid_transition",
+        error: 'invalid_transition',
         current: tr.status,
         target,
         allowed,
       },
       { status: 409 },
-    );
+    )
   }
 
-  const now = new Date();
-  const timestampMap: Record<string, Record<string, Date>> = {
-    [RequestStatus.QUOTED]: { quotedAt: now },
-    [RequestStatus.APPOINTMENT_CONFIRMED]: {
+  const now = new Date()
+  const timestampMap: Record<string, Record<string, Date | null>> = {
+    SENT: { sentAt: now },
+    QUOTED: { quotedAt: now },
+    APPOINTMENT_CONFIRMED: {
       depositConfirmedAt: now,
       appointmentAt: parsed.data.appointmentAt
         ? new Date(parsed.data.appointmentAt)
         : now,
     },
-    [RequestStatus.FINISHED]: { finishedAt: now },
-    [RequestStatus.EXPIRED]: { expiredAt: now },
-  };
+    FINISHED: { finishedAt: now },
+    EXPIRED: { expiredAt: now },
+  }
 
-  const updated = await prisma.tattooRequest.update({
-    where: { id },
-    data: {
-      status: target as RequestStatus,
+  const [updated] = await db
+    .update(tattooRequest)
+    .set({
+      status: target as
+        | 'SENT'
+        | 'QUOTED'
+        | 'APPOINTMENT_CONFIRMED'
+        | 'FINISHED'
+        | 'EXPIRED',
       ...timestampMap[target],
-    },
-    select: {
-      id: true,
-      status: true,
-      quotedAt: true,
-      depositConfirmedAt: true,
-      appointmentAt: true,
-      finishedAt: true,
-      expiredAt: true,
-      updatedAt: true,
-    },
-  });
+    })
+    .where(eq(tattooRequest.id, id))
+    .returning({
+      id: tattooRequest.id,
+      status: tattooRequest.status,
+      quotedAt: tattooRequest.quotedAt,
+      depositConfirmedAt: tattooRequest.depositConfirmedAt,
+      appointmentAt: tattooRequest.appointmentAt,
+      finishedAt: tattooRequest.finishedAt,
+      expiredAt: tattooRequest.expiredAt,
+      updatedAt: tattooRequest.updatedAt,
+    })
 
-  return NextResponse.json(updated);
-});
+  return NextResponse.json(updated)
+})

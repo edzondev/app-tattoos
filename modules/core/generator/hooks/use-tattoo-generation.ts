@@ -1,27 +1,27 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { api, ApiError } from "@/lib/api";
+import { useEffect, useRef, useState } from 'react'
+import { ApiError, api } from '@/lib/api'
 
-const MAX_ATTEMPTS = 2;
+const MAX_ATTEMPTS = 2
 
 export type PreviewItem = {
-  id: string;
-  createdAt: number;
-  dataUrl: string;
-  mimeType: string;
-  refineText?: string;
-};
+  id: string
+  createdAt: number
+  dataUrl: string
+  mimeType: string
+  refineText?: string
+}
 
 type PreviewResponse = {
-  dataUrl: string;
-  mimeType: string;
-};
+  dataUrl: string
+  mimeType: string
+}
 
 type GenerationState = {
-  previews: PreviewItem[];
-  selectedPreviewId: string | null;
-  isGenerating: boolean;
-  error: string | null;
-};
+  previews: PreviewItem[]
+  selectedPreviewId: string | null
+  isGenerating: boolean
+  error: string | null
+}
 
 export function useTattooGeneration(
   requestId: string | null,
@@ -32,113 +32,110 @@ export function useTattooGeneration(
     selectedPreviewId: null,
     isGenerating: false,
     error: null,
-  });
-  const lockRef = useRef(false);
+  })
+  const lockRef = useRef(false)
   const generatePreviewRef = useRef<(refineText?: string) => Promise<void>>(
     async () => {},
-  );
-  const attempts = state.previews.length;
-  const canRegenerate = attempts < MAX_ATTEMPTS && !state.isGenerating;
+  )
+  const attempts = state.previews.length
+  const canRegenerate = attempts < MAX_ATTEMPTS && !state.isGenerating
 
   const selectedPreview =
-    state.previews.find((p) => p.id === state.selectedPreviewId) ?? null;
+    state.previews.find((p) => p.id === state.selectedPreviewId) ?? null
 
   const attemptLabel =
-    attempts > 0 ? `Intento ${attempts} de ${MAX_ATTEMPTS}` : "";
+    attempts > 0 ? `Intento ${attempts} de ${MAX_ATTEMPTS}` : ''
 
-  const selectPreview = useCallback((id: string) => {
+  const selectPreview = (id: string) => {
     setState((s) => {
-      const exists = s.previews.some((p) => p.id === id);
-      if (!exists) return s;
-      return { ...s, selectedPreviewId: id };
-    });
-  }, []);
+      const exists = s.previews.some((p) => p.id === id)
+      if (!exists) return s
+      return { ...s, selectedPreviewId: id }
+    })
+  }
 
-  const generatePreview = useCallback(
-    async (refineText?: string) => {
-      if (!requestId) {
-        setState((s) => ({ ...s, error: "No hay solicitud activa." }));
-        return;
+  const generatePreview = async (refineText?: string) => {
+    if (!requestId) {
+      setState((s) => ({ ...s, error: 'No hay solicitud activa.' }))
+      return
+    }
+
+    if (lockRef.current) return
+    if (state.previews.length >= MAX_ATTEMPTS) {
+      setState((s) => ({
+        ...s,
+        error:
+          'Alcanzaste el límite de 2 diseños para esta solicitud. Escríbenos por WhatsApp para continuar.',
+      }))
+      return
+    }
+
+    lockRef.current = true
+    setState((s) => ({ ...s, isGenerating: true, error: null }))
+
+    try {
+      const trimmed = refineText?.trim() || undefined
+
+      const data = await api<PreviewResponse>(
+        `/api/request/${requestId}/generate-preview`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ refineText: trimmed }),
+        },
+      )
+
+      const newPreview: PreviewItem = {
+        id: crypto.randomUUID(),
+        createdAt: Date.now(),
+        dataUrl: data.dataUrl,
+        mimeType: data.mimeType,
+        refineText: trimmed,
       }
 
-      if (lockRef.current) return;
-      if (state.previews.length >= MAX_ATTEMPTS) {
-        setState((s) => ({
-          ...s,
-          error:
-            "Alcanzaste el límite de 2 diseños para esta solicitud. Escríbenos por WhatsApp para continuar.",
-        }));
-        return;
-      }
-
-      lockRef.current = true;
-      setState((s) => ({ ...s, isGenerating: true, error: null }));
-
-      try {
-        const trimmed = refineText?.trim() || undefined;
-
-        const data = await api<PreviewResponse>(
-          `/api/request/${requestId}/generate-preview`,
-          {
-            method: "POST",
-            body: JSON.stringify({ refineText: trimmed }),
-          },
-        );
-
-        const newPreview: PreviewItem = {
-          id: crypto.randomUUID(),
-          createdAt: Date.now(),
-          dataUrl: data.dataUrl,
-          mimeType: data.mimeType,
-          refineText: trimmed,
-        };
-
-        setState((s) => {
-          if (s.previews.length >= MAX_ATTEMPTS) {
-            return { ...s, isGenerating: false };
-          }
-
-          const nextPreviews = [...s.previews, newPreview];
-
-          return {
-            ...s,
-            previews: nextPreviews,
-            selectedPreviewId: newPreview.id,
-            isGenerating: false,
-          };
-        });
-      } catch (err: unknown) {
-        let message = "Error al generar el diseño. Intenta de nuevo.";
-
-        if (err instanceof ApiError && err.status === 403) {
-          const body = err.body as { message?: string } | null;
-          message =
-            body?.message ??
-            "Alcanzaste el límite de 2 diseños para esta solicitud. Escríbenos por WhatsApp para continuar.";
-        } else if (err instanceof Error) {
-          message = err.message;
+      setState((s) => {
+        if (s.previews.length >= MAX_ATTEMPTS) {
+          return { ...s, isGenerating: false }
         }
 
-        setState((s) => ({
+        const nextPreviews = [...s.previews, newPreview]
+
+        return {
           ...s,
+          previews: nextPreviews,
+          selectedPreviewId: newPreview.id,
           isGenerating: false,
-          error: message,
-        }));
-      } finally {
-        lockRef.current = false;
+        }
+      })
+    } catch (err: unknown) {
+      let message = 'Error al generar el diseño. Intenta de nuevo.'
+
+      if (err instanceof ApiError && err.status === 403) {
+        const body = err.body as { message?: string } | null
+        message =
+          body?.message ??
+          'Alcanzaste el límite de 2 diseños para esta solicitud. Escríbenos por WhatsApp para continuar.'
+      } else if (err instanceof Error) {
+        message = err.message
       }
-    },
-    [requestId, state.previews.length],
-  );
-  generatePreviewRef.current = generatePreview;
+
+      setState((s) => ({
+        ...s,
+        isGenerating: false,
+        error: message,
+      }))
+    } finally {
+      lockRef.current = false
+    }
+  }
+  generatePreviewRef.current = generatePreview
 
   useEffect(() => {
-    if (!autoGenerate) return;
-    if (!requestId) return;
-    if (state.previews.length > 0) return;
+    if (!autoGenerate) return
+    if (!requestId) return
+    if (state.previews.length > 0) return
 
-    generatePreviewRef.current();
-  }, [autoGenerate, requestId]);
+    generatePreviewRef.current()
+  }, [autoGenerate, requestId, state.previews.length])
 
   return {
     previews: state.previews,
@@ -152,5 +149,5 @@ export function useTattooGeneration(
     isGenerating: state.isGenerating,
     error: state.error,
     generatePreview,
-  };
+  }
 }

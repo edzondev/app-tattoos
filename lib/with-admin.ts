@@ -1,11 +1,11 @@
-import { type NextResponse } from "next/server";
-import { requireAdmin, AdminGuardError } from "@/lib/admin-guard";
+import type { NextResponse } from 'next/server'
+import { AdminGuardError, requireAdmin } from '@/lib/admin-guard'
 
 type RouteHandler<TParams = Record<string, string>> = (
   req: Request,
   context: { params: Promise<TParams> },
   admin: { userId: string },
-) => Promise<ReturnType<typeof NextResponse.json>>;
+) => Promise<ReturnType<typeof NextResponse.json>>
 
 /**
  * withAdmin
@@ -30,18 +30,18 @@ export function withAdmin<TParams = Record<string, string>>(
     req: Request,
     context: { params: Promise<TParams> },
   ): Promise<ReturnType<typeof NextResponse.json>> => {
-    let admin: { userId: string };
+    let admin: { userId: string }
 
     try {
-      admin = await requireAdmin();
+      admin = await requireAdmin()
     } catch (err) {
       if (err instanceof AdminGuardError) {
-        const { NextResponse } = await import("next/server");
-        return NextResponse.json({ error: err.code }, { status: err.status });
+        const { NextResponse } = await import('next/server')
+        return NextResponse.json({ error: err.code }, { status: err.status })
       }
-      throw err;
+      throw err
     }
 
-    return handler(req, context, admin);
-  };
+    return handler(req, context, admin)
+  }
 }

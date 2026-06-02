@@ -1,63 +1,61 @@
-"use client";
+'use client'
 
-import { useEffect, useTransition } from "react";
-import { useRouter, useSearchParams, usePathname } from "next/navigation";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-import { Input } from "@/modules/core/components/ui/input";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Search } from 'lucide-react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useTransition } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { cn } from '@/lib/utils'
+import {
+  Field,
+  FieldContent,
+  FieldError,
+} from '@/modules/core/components/ui/field'
+import { Input } from '@/modules/core/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/modules/core/components/ui/select";
+} from '@/modules/core/components/ui/select'
+import { useDebouncedCallback } from '@/modules/hooks/use-debounce'
 import {
-  Field,
-  FieldContent,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/modules/core/components/ui/field";
-import {
-  adminFiltersSchema,
-  STATUS_OPTIONS,
   type AdminFiltersValues,
-} from "@/modules/schemas/admin-filters.schema";
-import { Search } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { useDebouncedCallback } from "@/modules/hooks/use-debounce";
+  adminFiltersSchema,
+  parseStatusFilter,
+  STATUS_OPTIONS,
+} from '@/modules/schemas/admin-filters.schema'
 
 export default function AdminFilters() {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-  const [isPending, startTransition] = useTransition();
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
 
   const form = useForm<AdminFiltersValues>({
     resolver: zodResolver(adminFiltersSchema),
     defaultValues: {
-      search: searchParams.get("search") ?? "",
-      status: searchParams.get("status") ?? "",
+      search: searchParams.get('search') ?? '',
+      status: parseStatusFilter(searchParams.get('status')),
     },
-  });
+  })
   useEffect(() => {
     form.reset({
-      search: searchParams.get("search") ?? "",
-      status: searchParams.get("status") ?? "",
-    });
-  }, [searchParams.toString()]); // eslint-disable-line react-hooks/exhaustive-deps
+      search: searchParams.get('search') ?? '',
+      status: parseStatusFilter(searchParams.get('status')),
+    })
+  }, [searchParams.get, form.reset]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function navigate(key: string, value: string) {
-    const params = new URLSearchParams(searchParams.toString());
-    value ? params.set(key, value) : params.delete(key);
-    startTransition(() => router.replace(`${pathname}?${params.toString()}`));
+    const params = new URLSearchParams(searchParams.toString())
+    value ? params.set(key, value) : params.delete(key)
+    startTransition(() => router.replace(`${pathname}?${params.toString()}`))
   }
 
   const handleSearch = useDebouncedCallback((value: string) =>
-    navigate("search", value),
-  );
+    navigate('search', value),
+  )
 
   return (
     <form>
@@ -76,12 +74,12 @@ export default function AdminFilters() {
                   {...field}
                   placeholder="Nombre del cliente..."
                   className={cn(
-                    "pl-9 bg-card/50 border-border/50 font-grotesk",
-                    isPending ? "opacity-60" : "",
+                    'pl-9 bg-card/50 border-border/50 font-grotesk',
+                    isPending ? 'opacity-60' : '',
                   )}
                   onChange={(e) => {
-                    field.onChange(e);
-                    handleSearch(e.target.value);
+                    field.onChange(e)
+                    handleSearch(e.target.value)
                   }}
                 />
               </div>
@@ -104,8 +102,8 @@ export default function AdminFilters() {
                 name={field.name}
                 value={field.value}
                 onValueChange={(value) => {
-                  field.onChange(value);
-                  navigate("status", value);
+                  field.onChange(value)
+                  navigate('status', value)
                 }}
               >
                 <SelectTrigger
@@ -128,5 +126,5 @@ export default function AdminFilters() {
         />
       </div>
     </form>
-  );
+  )
 }

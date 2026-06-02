@@ -1,14 +1,19 @@
-"use client";
+'use client'
 
-import { FormProvider } from "react-hook-form";
-import { useGeneratorForm } from "./hooks/use-generator-form";
-import BasicStep from "./steps/basic-step";
-import ReferencesStep from "./steps/references-step";
-import ResultsStep from "./steps/results-step";
-import StepIndicator from "./steps/step-indicator";
-import ContactModal from "./steps/contact-modal";
-import { Button } from "../components/ui/button";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import dynamic from 'next/dynamic'
+import { FormProvider } from 'react-hook-form'
+import { useGeneratorForm } from './hooks/use-generator-form'
+import BasicStep from './steps/basic-step'
+import ReferencesStep from './steps/references-step'
+import ResultsStep from './steps/results-step'
+import StepIndicator from './steps/step-indicator'
+
+const ContactModal = dynamic(() => import('./steps/contact-modal'), {
+  ssr: false,
+})
+
+import { ArrowLeft, Loader2 } from 'lucide-react'
+import { Button } from '../components/ui/button'
 
 export default function GeneratorClient() {
   const {
@@ -22,24 +27,25 @@ export default function GeneratorClient() {
     isTransitioning,
     apiError,
     showContactModal,
+    closeContactModal,
     contactError,
     isContactSubmitting,
     handleContactSubmit,
-  } = useGeneratorForm();
+  } = useGeneratorForm()
 
   return (
     <FormProvider {...form}>
       <StepIndicator currentStep={step} />
       <div className="min-h-70">
-        {step === 1 && <BasicStep />}
-        {step === 2 && <ReferencesStep />}
-        {step === 3 && <ResultsStep requestId={requestId} />}
+        {step === 1 ? <BasicStep /> : null}
+        {step === 2 ? <ReferencesStep /> : null}
+        {step === 3 ? <ResultsStep requestId={requestId} /> : null}
       </div>
       <div className="mt-10">
-        {apiError && (
+        {apiError ? (
           <p className="mb-2 text-sm text-destructive">{apiError}</p>
-        )}
-        {isFirst && (
+        ) : null}
+        {isFirst ? (
           <Button
             type="button"
             onClick={goNext}
@@ -48,13 +54,13 @@ export default function GeneratorClient() {
             size="lg"
           >
             {isTransitioning ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : null}
             Siguiente: Referencias
           </Button>
-        )}
+        ) : null}
 
-        {step === 2 && (
+        {step === 2 ? (
           <div className="flex gap-3">
             <Button
               type="button"
@@ -75,14 +81,14 @@ export default function GeneratorClient() {
               size="lg"
             >
               {isTransitioning ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : null}
               Generar diseños con IA
             </Button>
           </div>
-        )}
+        ) : null}
 
-        {isLast && (
+        {isLast ? (
           <Button
             type="button"
             variant="ghost"
@@ -93,7 +99,7 @@ export default function GeneratorClient() {
             <ArrowLeft size={16} />
             Volver a referencias
           </Button>
-        )}
+        ) : null}
       </div>
 
       <ContactModal
@@ -101,7 +107,8 @@ export default function GeneratorClient() {
         isSubmitting={isContactSubmitting}
         error={contactError}
         onSubmit={handleContactSubmit}
+        onClose={closeContactModal}
       />
     </FormProvider>
-  );
+  )
 }
