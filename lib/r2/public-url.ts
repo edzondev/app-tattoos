@@ -8,7 +8,7 @@
  *   const publicUrl = buildR2PublicUrl(r2Key); // "https://cdn.example.com/tattoos/requests/..."
  */
 export function buildR2PublicUrl(r2Key: string): string | null {
-  const base = process.env.R2_PUBLIC_URL?.replace(/\/+$/, "");
-  if (!base) return null;
-  return `${base}/${r2Key}`;
+  const base = process.env.R2_PUBLIC_URL?.replace(/\/+$/, '')
+  if (!base) return null
+  return `${base}/${r2Key}`
 }

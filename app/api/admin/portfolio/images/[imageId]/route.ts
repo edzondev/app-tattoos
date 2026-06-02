@@ -1,36 +1,40 @@
-export const runtime = "nodejs";
-
-import { NextResponse } from "next/server";
-import { withAdmin } from "@/lib/with-admin";
-import prisma from "@/lib/prisma";
-import { r2Client } from "@/lib/r2/presigned";
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand } from '@aws-sdk/client-s3'
+import { eq } from 'drizzle-orm'
+import { revalidatePath } from 'next/cache'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { portfolioImage } from '@/lib/db/schema'
+import { requiredEnv } from '@/lib/env'
+import { r2Client } from '@/lib/r2/presigned'
+import { withAdmin } from '@/lib/with-admin'
 
 export const DELETE = withAdmin<{ imageId: string }>(
   async (_req, { params }) => {
-    const { imageId } = await params;
+    const { imageId } = await params
 
-    const image = await prisma.portfolioImage.findUnique({
-      where: { id: imageId },
-      select: { id: true, r2Key: true },
-    });
+    const image = await db.query.portfolioImage.findFirst({
+      where: eq(portfolioImage.id, imageId),
+      columns: { id: true, r2Key: true },
+    })
 
     if (!image) {
-      return NextResponse.json({ error: "Image not found" }, { status: 404 });
+      return NextResponse.json({ error: 'Image not found' }, { status: 404 })
     }
 
-    const client = r2Client();
+    const client = r2Client()
     await client
       .send(
         new DeleteObjectCommand({
-          Bucket: process.env.R2_BUCKET!,
+          Bucket: requiredEnv('R2_BUCKET'),
           Key: image.r2Key,
         }),
       )
-      .catch(() => {});
+      .catch(() => {})
 
-    await prisma.portfolioImage.delete({ where: { id: imageId } });
+    await db.delete(portfolioImage).where(eq(portfolioImage.id, imageId))
 
-    return NextResponse.json({ ok: true });
+    revalidatePath('/')
+
+    return NextResponse.json({ ok: true })
   },
-);
+)

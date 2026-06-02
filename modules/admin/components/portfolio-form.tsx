@@ -1,169 +1,165 @@
-"use client";
+'use client'
 
-import { useCallback, useState } from "react";
-import { useForm, Controller } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import imageCompression from "browser-image-compression";
-import { Input } from "@/modules/core/components/ui/input";
-import { Textarea } from "@/modules/core/components/ui/textarea";
-import { Button } from "@/modules/core/components/ui/button";
+import { zodResolver } from '@hookform/resolvers/zod'
+import imageCompression from 'browser-image-compression'
+import {
+  AlertCircle,
+  ArrowLeft,
+  Loader2,
+  Trash2,
+  Upload,
+  X,
+} from 'lucide-react'
+import Image from 'next/image'
+import { useId, useState } from 'react'
+import { Controller, useForm } from 'react-hook-form'
+import { ColorMode, TattooStyle } from '@/lib/db/enums'
+import { COLOR_MODE_LABELS, STYLE_LABELS } from '@/lib/labels'
+import { Button } from '@/modules/core/components/ui/button'
+import {
+  Field,
+  FieldError,
+  FieldGroup,
+  FieldLabel,
+} from '@/modules/core/components/ui/field'
+import { Input } from '@/modules/core/components/ui/input'
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/modules/core/components/ui/select";
+} from '@/modules/core/components/ui/select'
+import { Textarea } from '@/modules/core/components/ui/textarea'
+import { useFileUpload } from '@/modules/hooks/use-file-upload'
 import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/modules/core/components/ui/field";
-import { STYLE_LABELS, COLOR_MODE_LABELS } from "@/lib/labels";
-import { TattooStyle, ColorMode } from "@/lib/generated/prisma/enums";
-import {
-  PortfolioItemSchema,
   type PortfolioItemInput,
-} from "@/modules/schemas/portfolio";
-import { useFileUpload } from "@/modules/hooks/use-file-upload";
-import {
-  X,
-  Upload,
-  Loader2,
-  CheckCircle2,
-  AlertCircle,
-  ArrowLeft,
-  Trash2,
-} from "lucide-react";
-import type { PortfolioItemWithImages } from "./portfolio-grid";
+  PortfolioItemSchema,
+} from '@/modules/schemas/portfolio'
+import type { PortfolioItemWithImages } from './portfolio-grid'
 
 type Props = {
-  editItem?: PortfolioItemWithImages | null;
-  onSaved: () => void;
-  onCancel: () => void;
-};
+  editItem?: PortfolioItemWithImages | null
+  onSaved: () => void
+  onCancel: () => void
+}
 
 export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
-  const isEdit = !!editItem;
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [existingImages, setExistingImages] = useState(editItem?.images ?? []);
-  const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
+  const uploadInputId = useId()
+  const isEdit = !!editItem
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isUploadingImages, setIsUploadingImages] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [existingImages, setExistingImages] = useState(editItem?.images ?? [])
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(null)
 
   const form = useForm<PortfolioItemInput>({
     resolver: zodResolver(PortfolioItemSchema),
-    mode: "onTouched",
+    mode: 'onTouched',
     defaultValues: {
-      title: editItem?.title ?? "",
+      title: editItem?.title ?? '',
       style: editItem?.style ?? TattooStyle.COVER_UP,
-      bodyZone: editItem?.bodyZone ?? "",
-      colorMode: (editItem?.colorMode as ColorMode) ?? ColorMode.BLACK_AND_GREY,
-      description: editItem?.description ?? "",
+      bodyZone: editItem?.bodyZone ?? '',
+      colorMode: editItem?.colorMode ?? ColorMode.BLACK_AND_GREY,
+      description: editItem?.description ?? '',
       isPublished: editItem?.isPublished ?? true,
       sortOrder: editItem?.sortOrder ?? 0,
     },
-  });
+  })
 
   const [fileState, fileActions] = useFileUpload({
     maxFiles: 10,
     maxSize: 10 * 1024 * 1024,
-    accept: "image/*",
+    accept: 'image/*',
     multiple: true,
-  });
+  })
 
-  const compressFile = useCallback(async (file: File): Promise<File> => {
+  const compressFile = async (file: File): Promise<File> => {
     return imageCompression(file, {
       maxSizeMB: 0.8,
       maxWidthOrHeight: 1920,
       useWebWorker: true,
-    });
-  }, []);
+    })
+  }
 
-  const uploadImage = useCallback(
-    async (file: File, itemId: string) => {
-      const compressed = await compressFile(file);
-      const formData = new FormData();
-      formData.append("file", compressed);
-      formData.append("itemId", itemId);
+  const uploadImage = async (file: File, itemId: string) => {
+    const compressed = await compressFile(file)
+    const formData = new FormData()
+    formData.append('file', compressed)
+    formData.append('itemId', itemId)
 
-      const res = await fetch("/api/portfolio/upload", {
-        method: "POST",
-        body: formData,
-      });
+    const res = await fetch('/api/portfolio/upload', {
+      method: 'POST',
+      body: formData,
+    })
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Error al subir imagen");
-      }
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new Error(body?.error ?? 'Error al subir imagen')
+    }
 
-      return res.json();
-    },
-    [compressFile],
-  );
+    return res.json()
+  }
 
-  const deleteExistingImage = useCallback(async (imageId: string) => {
-    setDeletingImageId(imageId);
+  const deleteExistingImage = async (imageId: string) => {
+    setDeletingImageId(imageId)
     try {
       const res = await fetch(`/api/admin/portfolio/images/${imageId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) throw new Error("Error al eliminar imagen");
-      setExistingImages((prev) => prev.filter((img) => img.id !== imageId));
+        method: 'DELETE',
+      })
+      if (!res.ok) throw new Error('Error al eliminar imagen')
+      setExistingImages((prev) => prev.filter((img) => img.id !== imageId))
     } catch {
-      setError("No se pudo eliminar la imagen");
+      setError('No se pudo eliminar la imagen')
     } finally {
-      setDeletingImageId(null);
+      setDeletingImageId(null)
     }
-  }, []);
+  }
 
   const onSubmit = async (data: PortfolioItemInput) => {
-    setIsSubmitting(true);
-    setError(null);
+    setIsSubmitting(true)
+    setError(null)
 
     try {
       const url = isEdit
         ? `/api/admin/portfolio/${editItem.id}`
-        : "/api/admin/portfolio";
-      const method = isEdit ? "PUT" : "POST";
+        : '/api/admin/portfolio'
+      const method = isEdit ? 'PUT' : 'POST'
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-      });
+      })
 
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
-        throw new Error(body?.error ?? "Error al guardar");
+        const body = await res.json().catch(() => null)
+        throw new Error(body?.error ?? 'Error al guardar')
       }
 
-      const saved = await res.json();
-      const itemId = saved.id;
+      const saved = await res.json()
+      const itemId = saved.id
 
       const newFiles = fileState.files
         .map((f) => f.file)
-        .filter((f): f is File => f instanceof File);
+        .filter((f): f is File => f instanceof File)
 
       if (newFiles.length > 0) {
-        setIsUploadingImages(true);
-        for (const file of newFiles) {
-          await uploadImage(file, itemId);
-        }
-        setIsUploadingImages(false);
+        setIsUploadingImages(true)
+        await Promise.all(newFiles.map((file) => uploadImage(file, itemId)))
+        setIsUploadingImages(false)
       }
 
-      onSaved();
+      onSaved()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Error inesperado");
-      setIsUploadingImages(false);
+      setError(err instanceof Error ? err.message : 'Error inesperado')
+      setIsUploadingImages(false)
     } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false)
     }
-  };
+  }
 
-  const isBusy = isSubmitting || isUploadingImages;
+  const isBusy = isSubmitting || isUploadingImages
 
   return (
     <div>
@@ -177,7 +173,7 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
       </button>
 
       <h2 className="font-bebas text-2xl tracking-wide mb-6">
-        {isEdit ? "Editar trabajo" : "Nuevo trabajo"}
+        {isEdit ? 'Editar trabajo' : 'Nuevo trabajo'}
       </h2>
 
       <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
@@ -238,7 +234,7 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
                 <FieldLabel>Zona del cuerpo</FieldLabel>
                 <Input
                   {...field}
-                  value={field.value ?? ""}
+                  value={field.value ?? ''}
                   placeholder="Ej: Antebrazo, Espalda"
                   disabled={isBusy}
                 />
@@ -261,8 +257,8 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
                       key={value}
                       className={`flex-1 cursor-pointer rounded-lg border px-4 py-2.5 text-center text-sm font-grotesk transition-colors ${
                         field.value === value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border hover:border-primary/30"
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border hover:border-primary/30'
                       }`}
                     >
                       <input
@@ -291,7 +287,7 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
               <FieldLabel>Descripción</FieldLabel>
               <Textarea
                 {...field}
-                value={field.value ?? ""}
+                value={field.value ?? ''}
                 placeholder="Descripción opcional del trabajo..."
                 rows={3}
                 disabled={isBusy}
@@ -306,7 +302,7 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
             name="isPublished"
             control={form.control}
             render={({ field }) => (
-              <label className="inline-flex items-center gap-2 cursor-pointer font-grotesk text-sm">
+              <span className="inline-flex items-center gap-2 cursor-pointer font-grotesk text-sm">
                 <button
                   type="button"
                   role="switch"
@@ -314,34 +310,17 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
                   onClick={() => field.onChange(!field.value)}
                   disabled={isBusy}
                   className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                    field.value ? "bg-primary" : "bg-input"
+                    field.value ? 'bg-primary' : 'bg-input'
                   }`}
                 >
                   <span
-                    className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
-                      field.value ? "translate-x-5" : "translate-x-0"
+                    className={`pointer-events-none block size-5 rounded-full bg-background shadow-lg ring-0 transition-transform ${
+                      field.value ? 'translate-x-5' : 'translate-x-0'
                     }`}
                   />
                 </button>
                 Publicado
-              </label>
-            )}
-          />
-
-          <Controller
-            name="sortOrder"
-            control={form.control}
-            render={({ field }) => (
-              <Field className="max-w-[120px]">
-                <FieldLabel>Orden</FieldLabel>
-                <Input
-                  type="number"
-                  min={0}
-                  value={field.value}
-                  onChange={(e) => field.onChange(Number(e.target.value))}
-                  disabled={isBusy}
-                />
-              </Field>
+              </span>
             )}
           />
         </div>
@@ -354,10 +333,13 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
               {existingImages.map((img) => (
                 <div key={img.id} className="relative group aspect-square">
                   {img.publicUrl ? (
-                    <img
+                    <Image
                       src={img.publicUrl}
                       alt=""
-                      className="h-full w-full rounded-lg object-cover"
+                      fill
+                      unoptimized
+                      sizes="120px"
+                      className="rounded-lg object-cover"
                     />
                   ) : (
                     <div className="h-full w-full rounded-lg bg-ink-medium flex items-center justify-center">
@@ -387,34 +369,37 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
         {/* Drop zone for new images */}
         <div>
           <FieldLabel>
-            {isEdit ? "Agregar más imágenes" : "Imágenes"}
+            {isEdit ? 'Agregar más imágenes' : 'Imágenes'}
           </FieldLabel>
-          <div
+          <label
+            htmlFor={uploadInputId}
             className={`mt-2 flex flex-col items-center justify-center rounded-xl border-2 border-dashed p-8 transition-colors cursor-pointer ${
               fileState.isDragging
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/40"
+                ? 'border-primary bg-primary/5'
+                : 'border-border hover:border-primary/40'
             }`}
             onDragEnter={fileActions.handleDragEnter}
             onDragLeave={fileActions.handleDragLeave}
             onDragOver={fileActions.handleDragOver}
             onDrop={fileActions.handleDrop}
-            onClick={fileActions.openFileDialog}
           >
-            <Upload className="h-8 w-8 text-muted-foreground/50 mb-2" />
+            <Upload className="size-8 text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground font-grotesk">
               Arrastra imágenes aquí o haz clic para seleccionar
             </p>
             <p className="text-xs text-muted-foreground/60 font-grotesk mt-1">
               Máx 10 MB por imagen. Se convertirán a WebP automáticamente.
             </p>
-            <input {...fileActions.getInputProps()} className="hidden" />
-          </div>
+            <input
+              {...fileActions.getInputProps({ id: uploadInputId })}
+              className="hidden"
+            />
+          </label>
 
           {fileState.errors.length > 0 && (
             <div className="mt-2 text-sm text-destructive font-grotesk">
-              {fileState.errors.map((err, i) => (
-                <p key={i}>{err}</p>
+              {fileState.errors.map((err) => (
+                <p key={err}>{err}</p>
               ))}
             </div>
           )}
@@ -424,17 +409,20 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
               {fileState.files.map((f) => (
                 <div key={f.id} className="relative group aspect-square">
                   {f.preview && (
-                    <img
+                    <Image
                       src={f.preview}
                       alt=""
-                      className="h-full w-full rounded-lg object-cover"
+                      fill
+                      unoptimized
+                      sizes="120px"
+                      className="rounded-lg object-cover"
                     />
                   )}
                   <button
                     type="button"
                     onClick={(e) => {
-                      e.stopPropagation();
-                      fileActions.removeFile(f.id);
+                      e.stopPropagation()
+                      fileActions.removeFile(f.id)
                     }}
                     className="absolute top-1 right-1 rounded-full bg-black/70 p-1 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive"
                   >
@@ -451,7 +439,7 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
             role="alert"
             className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3"
           >
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+            <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
             <p className="font-grotesk text-sm text-destructive">{error}</p>
           </div>
         )}
@@ -468,17 +456,17 @@ export default function PortfolioForm({ editItem, onSaved, onCancel }: Props) {
           <Button type="submit" disabled={isBusy}>
             {isBusy ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {isUploadingImages ? "Subiendo imágenes…" : "Guardando…"}
+                <Loader2 className="size-4 animate-spin" />
+                {isUploadingImages ? 'Subiendo imágenes…' : 'Guardando…'}
               </>
             ) : isEdit ? (
-              "Guardar cambios"
+              'Guardar cambios'
             ) : (
-              "Crear trabajo"
+              'Crear trabajo'
             )}
           </Button>
         </div>
       </form>
     </div>
-  );
+  )
 }

@@ -1,25 +1,30 @@
-import prisma from "@/lib/prisma";
-import { Step2Schema } from "@/modules/schemas/tattoo";
-import { NextResponse } from "next/server";
+import { eq } from 'drizzle-orm'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { tattooRequest } from '@/lib/db/schema'
+import { Step2Schema } from '@/modules/schemas/tattoo'
 
 export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
-  const { id } = await params;
-  const body = await req.json();
-  const parsed = Step2Schema.safeParse(body);
+  const [{ id }, body] = await Promise.all([params, req.json()])
+  const parsed = Step2Schema.safeParse(body)
 
   if (!parsed.success)
-    return NextResponse.json({ error: parsed.error.message }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.message }, { status: 400 })
 
-  const updated = await prisma.tattooRequest.update({
-    where: { id },
-    data: {
+  const [updated] = await db
+    .update(tattooRequest)
+    .set({
       specialInstructions: parsed.data.specialInstructions,
-    },
-    select: { id: true, status: true },
-  });
+    })
+    .where(eq(tattooRequest.id, id))
+    .returning({ id: tattooRequest.id, status: tattooRequest.status })
 
-  return NextResponse.json(updated);
+  if (!updated) {
+    return NextResponse.json({ error: 'not_found' }, { status: 404 })
+  }
+
+  return NextResponse.json(updated)
 }

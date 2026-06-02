@@ -1,23 +1,31 @@
-"use client";
+'use client'
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ContactSchema, type ContactInput } from "@/modules/schemas/tattoo";
-import { Button } from "@/modules/core/components/ui/button";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { AlertCircle, Loader2 } from 'lucide-react'
+import { useForm } from 'react-hook-form'
+import { Button } from '@/modules/core/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/modules/core/components/ui/dialog'
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/modules/core/components/ui/field";
-import { Input } from "@/modules/core/components/ui/input";
-import { AlertCircle, Loader2 } from "lucide-react";
+} from '@/modules/core/components/ui/field'
+import { Input } from '@/modules/core/components/ui/input'
+import { type ContactInput, ContactSchema } from '@/modules/schemas/tattoo'
 
 interface ContactModalProps {
-  isOpen: boolean;
-  isSubmitting: boolean;
-  error: string | null;
-  onSubmit: (data: ContactInput) => Promise<void>;
+  isOpen: boolean
+  isSubmitting: boolean
+  error: string | null
+  onSubmit: (data: ContactInput) => Promise<void>
+  onClose?: () => void
 }
 
 export default function ContactModal({
@@ -25,6 +33,7 @@ export default function ContactModal({
   isSubmitting,
   error,
   onSubmit,
+  onClose,
 }: ContactModalProps) {
   const {
     register,
@@ -32,82 +41,74 @@ export default function ContactModal({
     formState: { errors },
   } = useForm<ContactInput>({
     resolver: zodResolver(ContactSchema),
-    mode: "onTouched",
-  });
-
-  if (!isOpen) return null;
+    mode: 'onTouched',
+  })
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card shadow-xl">
-        <div className="p-6">
-          <h2 className="font-bebas text-2xl tracking-wide">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose?.()}>
+      <DialogContent className="sm:max-w-md" showCloseButton={!isSubmitting}>
+        <DialogHeader>
+          <DialogTitle className="font-bebas text-2xl tracking-wide">
             Antes de generar tu diseño
-          </h2>
-          <p className="mt-1 font-grotesk text-sm text-muted-foreground">
+          </DialogTitle>
+          <DialogDescription className="font-grotesk text-sm">
             Necesitamos tus datos para asociar el diseño a tu solicitud.
-          </p>
+          </DialogDescription>
+        </DialogHeader>
 
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            noValidate
-            className="mt-5"
-          >
-            <FieldGroup>
-              <Field>
-                <FieldLabel>
-                  Nombre completo <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Input
-                  {...register("fullName")}
-                  placeholder="Ej: Valentina Torres"
-                  autoComplete="name"
-                  disabled={isSubmitting}
-                />
-                {errors.fullName && <FieldError errors={[errors.fullName]} />}
-              </Field>
-
-              <Field>
-                <FieldLabel>
-                  WhatsApp <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Input
-                  {...register("whatsapp")}
-                  type="tel"
-                  placeholder="Ej: +51 987 654 321"
-                  autoComplete="tel"
-                  disabled={isSubmitting}
-                />
-                {errors.whatsapp && <FieldError errors={[errors.whatsapp]} />}
-              </Field>
-
-              {error && (
-                <div
-                  role="alert"
-                  className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3"
-                >
-                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
-                  <p className="font-grotesk text-sm text-destructive">
-                    {error}
-                  </p>
-                </div>
-              )}
-
-              <Button
-                type="submit"
+        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+          <FieldGroup>
+            <Field>
+              <FieldLabel>
+                Nombre completo <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input
+                {...register('fullName')}
+                placeholder="Ej: Valentina Torres"
+                autoComplete="name"
                 disabled={isSubmitting}
-                className="w-full font-grotesk font-semibold"
-                size="lg"
+              />
+              {errors.fullName && <FieldError errors={[errors.fullName]} />}
+            </Field>
+
+            <Field>
+              <FieldLabel>
+                WhatsApp <span className="text-destructive">*</span>
+              </FieldLabel>
+              <Input
+                {...register('whatsapp')}
+                type="tel"
+                placeholder="Ej: +51 987 654 321"
+                autoComplete="tel"
+                disabled={isSubmitting}
+              />
+              {errors.whatsapp && <FieldError errors={[errors.whatsapp]} />}
+            </Field>
+
+            {error && (
+              <div
+                role="alert"
+                className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3"
               >
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : null}
-                Continuar y generar diseño
-              </Button>
-            </FieldGroup>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
+                <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
+                <p className="font-grotesk text-sm text-destructive">{error}</p>
+              </div>
+            )}
+
+            <Button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full font-grotesk font-semibold"
+              size="lg"
+            >
+              {isSubmitting && (
+                <Loader2 data-icon="inline-start" className="animate-spin" />
+              )}
+              Continuar y generar diseño
+            </Button>
+          </FieldGroup>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
 }

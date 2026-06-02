@@ -1,6 +1,6 @@
-import type { PropsWithChildren } from "react";
-import LandingNavbar from "@/modules/core/components/shared/navbar/landing-navbar";
-import Footer from "@/modules/landing/footer";
+import type { PropsWithChildren } from 'react'
+import LandingNavbar from '@/modules/core/components/shared/navbar/landing-navbar'
+import Footer from '@/modules/landing/footer'
 
 export default function MarketingLayout({ children }: PropsWithChildren) {
   return (
@@ -9,5 +9,5 @@ export default function MarketingLayout({ children }: PropsWithChildren) {
       <main className="container mx-auto px-4 lg:px-6">{children}</main>
       <Footer />
     </section>
-  );
+  )
 }

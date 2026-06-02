@@ -1,33 +1,32 @@
-"use client";
+'use client'
 
-import { Controller } from "react-hook-form";
-import { Input } from "@/modules/core/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/modules/core/components/ui/select";
+import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
+import { Controller } from 'react-hook-form'
+import { Button } from '@/modules/core/components/ui/button'
 import {
   Field,
   FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/modules/core/components/ui/field";
-import { Button } from "@/modules/core/components/ui/button";
+} from '@/modules/core/components/ui/field'
+import { Input } from '@/modules/core/components/ui/input'
 import {
-  useAdminLeadForm,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/modules/core/components/ui/select'
+import { STATUS_OPTIONS } from '@/modules/schemas/admin-filters.schema'
+import {
   type AdminLeadFormDefaults,
-} from "../hooks/use-deposit-form";
-import { STATUS_OPTIONS } from "@/modules/schemas/admin-filters.schema";
-import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
-import { RequestStatus } from "@/lib/generated/prisma/enums";
+  useAdminLeadForm,
+} from '../hooks/use-deposit-form'
 
 type Props = {
-  defaults: AdminLeadFormDefaults;
-};
+  defaults: AdminLeadFormDefaults
+}
 
 function SuccessBanner() {
   return (
@@ -35,12 +34,12 @@ function SuccessBanner() {
       role="status"
       className="flex items-center gap-2 rounded-lg border border-emerald-500/30 bg-emerald-500/10 px-4 py-3"
     >
-      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+      <CheckCircle2 className="size-4 shrink-0 text-emerald-500" />
       <p className="font-grotesk text-sm text-emerald-500">
         Cambios guardados correctamente.
       </p>
     </div>
-  );
+  )
 }
 
 function ErrorBanner({ message }: { message: string }) {
@@ -49,19 +48,29 @@ function ErrorBanner({ message }: { message: string }) {
       role="alert"
       className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3"
     >
-      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+      <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
       <p className="font-grotesk text-sm text-destructive">{message}</p>
     </div>
-  );
+  )
+}
+
+function PartialSuccessBanner({ message }: { message: string }) {
+  return (
+    <div
+      role="status"
+      className="flex items-start gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3"
+    >
+      <AlertCircle className="mt-0.5 size-4 shrink-0 text-amber-500" />
+      <p className="font-grotesk text-sm text-amber-600 dark:text-amber-400">
+        {message}
+      </p>
+    </div>
+  )
 }
 
 export default function AdminEditForm({ defaults }: Props) {
   const { form, handleSubmit, isSubmitting, result, clearResult } =
-    useAdminLeadForm(defaults);
-  const selectableStatuses = STATUS_OPTIONS.filter(
-    (s) =>
-      s.value !== RequestStatus.FINISHED && s.value !== RequestStatus.EXPIRED,
-  );
+    useAdminLeadForm(defaults)
   return (
     <form
       className="space-y-6"
@@ -85,10 +94,10 @@ export default function AdminEditForm({ defaults }: Props) {
                 placeholder="Ej: 5000"
                 aria-invalid={fieldState.invalid}
                 disabled={isSubmitting}
-                value={field.value ?? ""}
+                value={field.value ?? ''}
                 onChange={(e) => {
-                  const raw = e.target.value;
-                  field.onChange(raw === "" ? undefined : Number(raw));
+                  const raw = e.target.value
+                  field.onChange(raw === '' ? undefined : Number(raw))
                 }}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -111,10 +120,10 @@ export default function AdminEditForm({ defaults }: Props) {
                 placeholder="Ej: 20000"
                 aria-invalid={fieldState.invalid}
                 disabled={isSubmitting}
-                value={field.value ?? ""}
+                value={field.value ?? ''}
                 onChange={(e) => {
-                  const raw = e.target.value;
-                  field.onChange(raw === "" ? undefined : Number(raw));
+                  const raw = e.target.value
+                  field.onChange(raw === '' ? undefined : Number(raw))
                 }}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -134,7 +143,7 @@ export default function AdminEditForm({ defaults }: Props) {
               </FieldContent>
               <Select
                 name={field.name}
-                value={field.value ?? ""}
+                value={field.value ?? ''}
                 onValueChange={field.onChange}
                 disabled={isSubmitting}
               >
@@ -146,7 +155,7 @@ export default function AdminEditForm({ defaults }: Props) {
                   <SelectValue placeholder="Selecciona un estado" />
                 </SelectTrigger>
                 <SelectContent position="popper">
-                  {selectableStatuses.map((s) => (
+                  {STATUS_OPTIONS.map((s) => (
                     <SelectItem key={s.value} value={s.value}>
                       {s.label}
                     </SelectItem>
@@ -158,7 +167,12 @@ export default function AdminEditForm({ defaults }: Props) {
         />
       </FieldGroup>
       {result?.ok === true && <SuccessBanner />}
-      {result?.ok === false && <ErrorBanner message={result.message} />}
+      {result?.ok === false && result.partial && (
+        <PartialSuccessBanner message={result.message} />
+      )}
+      {result?.ok === false && !result.partial && (
+        <ErrorBanner message={result.message} />
+      )}
       <div className="flex justify-end">
         <Button
           type="submit"
@@ -167,14 +181,14 @@ export default function AdminEditForm({ defaults }: Props) {
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
               Guardando…
             </>
           ) : (
-            "Guardar cambios"
+            'Guardar cambios'
           )}
         </Button>
       </div>
     </form>
-  );
+  )
 }

@@ -1,50 +1,59 @@
-import prisma from "@/lib/prisma";
-import AdminEditForm from "@/modules/admin/components/admin-edit-form";
-import { Button } from "@/modules/core/components/ui/button";
-import { Separator } from "@/modules/core/components/ui/separator";
-import { getStatusLabel, getStyleLabel } from "@/lib/labels";
-import { format } from "date-fns";
-import { ArrowLeft, MessageCircle, Phone } from "lucide-react";
-import Link from "next/link";
-import { notFound } from "next/navigation";
-import { WHATSAPP_TEMPLATES } from "@/lib/config/brand";
+import { format } from 'date-fns'
+import { eq } from 'drizzle-orm'
+import { ArrowLeft, MessageCircle, Phone } from 'lucide-react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { notFound } from 'next/navigation'
+import { WHATSAPP_TEMPLATES } from '@/lib/config/brand'
+import { db } from '@/lib/db'
+import { tattooRequest } from '@/lib/db/schema'
+import { getStatusLabel, getStyleLabel } from '@/lib/labels'
+import AdminEditForm from '@/modules/admin/components/admin-edit-form'
+import { Button } from '@/modules/core/components/ui/button'
+import { Separator } from '@/modules/core/components/ui/separator'
 
 type Props = {
   params: Promise<{
-    requestCode: string;
-  }>;
-};
+    requestCode: string
+  }>
+}
 
 function formatCents(cents: number | null | undefined): string {
-  if (!cents) return "—";
-  return `S/ ${(cents / 100).toFixed(0)}`;
+  if (!cents) return '—'
+  return `S/ ${(cents / 100).toFixed(0)}`
 }
 
 function buildWhatsAppQuoteUrl(lead: {
-  whatsappE164: string | null;
-  fullName: string | null;
-  requestCode: string | null;
-  trackingToken: string;
-  priceCents: number | null;
-  depositCents: number | null;
+  whatsappE164: string | null
+  fullName: string | null
+  requestCode: string | null
+  trackingToken: string
+  priceCents: number | null
+  depositCents: number | null
 }): string {
-  const name = lead.fullName ?? "cliente";
-  const code = lead.requestCode ?? lead.trackingToken;
-  const total = formatCents(lead.priceCents);
-  const adelanto = formatCents(lead.depositCents);
-  const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/seguimiento/${code}`;
+  const name = lead.fullName ?? 'cliente'
+  const code = lead.requestCode ?? lead.trackingToken
+  const total = formatCents(lead.priceCents)
+  const adelanto = formatCents(lead.depositCents)
+  const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/seguimiento/${code}`
 
-  const msg = WHATSAPP_TEMPLATES.adminQuote(name, code, total, adelanto, trackingUrl);
+  const msg = WHATSAPP_TEMPLATES.adminQuote(
+    name,
+    code,
+    total,
+    adelanto,
+    trackingUrl,
+  )
 
-  return `https://wa.me/${lead.whatsappE164 ?? ""}?text=${encodeURIComponent(msg)}`;
+  return `https://wa.me/${lead.whatsappE164 ?? ''}?text=${encodeURIComponent(msg)}`
 }
 
 export default async function Page({ params }: Props) {
-  const { requestCode } = await params;
+  const { requestCode } = await params
 
-  const lead = await prisma.tattooRequest.findFirst({
-    where: { requestCode },
-    select: {
+  const lead = await db.query.tattooRequest.findFirst({
+    where: eq(tattooRequest.requestCode, requestCode),
+    columns: {
       id: true,
       requestCode: true,
       trackingToken: true,
@@ -69,9 +78,9 @@ export default async function Page({ params }: Props) {
       finishedAt: true,
       expiredAt: true,
     },
-  });
+  })
 
-  if (!lead) notFound();
+  if (!lead) notFound()
 
   return (
     <div className="flex flex-col gap-8">
@@ -91,7 +100,7 @@ export default async function Page({ params }: Props) {
           <div className="mt-1 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
             <span className="text-xs text-primary">{lead.requestCode}</span>
             <span>{lead.district}</span>
-            <span>{format(new Date(lead.createdAt), "dd MMMM yyyy")}</span>
+            <span>{format(new Date(lead.createdAt), 'dd MMMM yyyy')}</span>
           </div>
         </div>
         <div className="flex gap-3">
@@ -131,14 +140,19 @@ export default async function Page({ params }: Props) {
               Diseño del cliente
             </h2>
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="overflow-hidden rounded-sm border border-border/20">
-                <img
-                  src={lead.selectedImagePublicUrl ?? ""}
-                  alt="Diseño generado"
-                  width={400}
-                  height={400}
-                  className="w-full object-cover"
-                />
+              <div className="relative aspect-square overflow-hidden rounded-sm border border-border/20">
+                {lead.selectedImagePublicUrl ? (
+                  <Image
+                    src={lead.selectedImagePublicUrl}
+                    alt="Diseño generado"
+                    fill
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-ink-medium text-muted-foreground">
+                    Sin imagen
+                  </div>
+                )}
               </div>
               <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between">
@@ -158,16 +172,16 @@ export default async function Page({ params }: Props) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Color</span>
                   <span className="text-foreground">
-                    {lead.colorMode === "BLACK_AND_GREY"
-                      ? "Blanco y Negro"
-                      : "Color"}
+                    {lead.colorMode === 'BLACK_AND_GREY'
+                      ? 'Blanco y Negro'
+                      : 'Color'}
                   </span>
                 </div>
                 <Separator className="bg-border/30" />
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Disponibilidad</span>
                   <span className="text-foreground text-right max-w-[50%]">
-                    {lead.availability ?? "No especificada"}
+                    {lead.availability ?? 'No especificada'}
                   </span>
                 </div>
                 {lead.extraComments && (
@@ -189,7 +203,7 @@ export default async function Page({ params }: Props) {
                 id: lead.id,
                 priceCents: lead.priceCents,
                 depositCents: lead.depositCents,
-                status: lead.status,
+                status: lead.status ?? undefined,
               }}
             />
           </div>
@@ -201,7 +215,7 @@ export default async function Page({ params }: Props) {
               Estado actual
             </h3>
             <span className="inline-flex items-center rounded-sm px-3 py-1.5 text-sm font-medium bg-primary/50">
-              {lead.status ? getStatusLabel(lead.status) : "Sin estado"}
+              {lead.status ? getStatusLabel(lead.status) : 'Sin estado'}
             </span>
           </div>
 
@@ -213,14 +227,14 @@ export default async function Page({ params }: Props) {
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Creado</span>
                 <span className="text-foreground text-xs">
-                  {format(new Date(lead.createdAt), "dd-MM-yyyy, HH:mm")}
+                  {format(new Date(lead.createdAt), 'dd-MM-yyyy, HH:mm')}
                 </span>
               </div>
               {lead.quotedAt && (
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cotizado</span>
                   <span className="text-foreground text-xs">
-                    {format(new Date(lead.quotedAt), "dd-MM-yyyy, HH:mm")}
+                    {format(new Date(lead.quotedAt), 'dd-MM-yyyy, HH:mm')}
                   </span>
                 </div>
               )}
@@ -230,7 +244,7 @@ export default async function Page({ params }: Props) {
                   <span className="text-foreground text-xs">
                     {format(
                       new Date(lead.depositConfirmedAt),
-                      "dd-MM-yyyy, HH:mm",
+                      'dd-MM-yyyy, HH:mm',
                     )}
                   </span>
                 </div>
@@ -239,7 +253,7 @@ export default async function Page({ params }: Props) {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Cita</span>
                   <span className="text-foreground text-xs">
-                    {format(new Date(lead.appointmentAt), "dd-MM-yyyy, HH:mm")}
+                    {format(new Date(lead.appointmentAt), 'dd-MM-yyyy, HH:mm')}
                   </span>
                 </div>
               )}
@@ -281,5 +295,5 @@ export default async function Page({ params }: Props) {
         </div>
       </div>
     </div>
-  );
+  )
 }

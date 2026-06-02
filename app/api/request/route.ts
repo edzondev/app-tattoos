@@ -1,54 +1,66 @@
-import prisma from "@/lib/prisma";
-import { CreateRequestSchema } from "@/modules/schemas/tattoo";
-import { NextResponse } from "next/server";
-import { RequestStatus } from "@/lib/generated/prisma/enums";
+import { and, eq, isNull, notInArray, or } from 'drizzle-orm'
+import { NextResponse } from 'next/server'
+import { db } from '@/lib/db'
+import { tattooRequest } from '@/lib/db/schema'
+import { CreateRequestSchema } from '@/modules/schemas/tattoo'
 
 function normalizeWhatsapp(raw: string): string {
-  return raw.replace(/[\s\-().]/g, "");
+  return raw.replace(/[\s\-().]/g, '')
 }
 
 export async function POST(req: Request) {
-  const json = await req.json().catch(() => null);
-  const parsed = CreateRequestSchema.safeParse(json);
+  const json = await req.json().catch(() => null)
+  const parsed = CreateRequestSchema.safeParse(json)
   if (!parsed.success) {
-    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+    return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { fullName, whatsapp, ...step1 } = parsed.data;
-  const whatsappE164 = normalizeWhatsapp(whatsapp);
+  const { fullName, whatsapp, ...step1 } = parsed.data
+  const whatsappE164 = normalizeWhatsapp(whatsapp)
 
-  // Buscar request activo con ese WhatsApp (status distinto de FINISHED/EXPIRED)
-  const existing = await prisma.tattooRequest.findFirst({
-    where: {
-      whatsappE164,
-      OR: [
-        { status: null },
-        { status: { notIn: [RequestStatus.FINISHED, RequestStatus.EXPIRED] } },
-      ],
-    },
-    select: { id: true, trackingToken: true },
-  });
+  // Buscar request activo con ese WhatsApp (status distinto de FINISHED/EXPIRED o status es null)
+  const existing = await db.query.tattooRequest.findFirst({
+    where: and(
+      eq(tattooRequest.whatsappE164, whatsappE164),
+      or(
+        isNull(tattooRequest.status),
+        notInArray(tattooRequest.status, ['FINISHED', 'EXPIRED']),
+      ),
+    ),
+    columns: { id: true, trackingToken: true },
+  })
 
   if (existing) {
     // Actualizar datos del Step1 y continuar con el request existente
-    await prisma.tattooRequest.update({
-      where: { id: existing.id },
-      data: { ...step1, fullName: fullName.trim() },
-    });
+    await db
+      .update(tattooRequest)
+      .set({
+        ...step1,
+        fullName: fullName.trim(),
+      })
+      .where(eq(tattooRequest.id, existing.id))
+
     return NextResponse.json({
       id: existing.id,
       trackingToken: existing.trackingToken,
       isExisting: true,
-    });
+    })
   }
 
-  const r = await prisma.tattooRequest.create({
-    data: { ...step1, fullName: fullName.trim(), whatsappE164 },
-    select: { id: true, trackingToken: true },
-  });
+  const [r] = await db
+    .insert(tattooRequest)
+    .values({
+      ...step1,
+      fullName: fullName.trim(),
+      whatsappE164,
+    })
+    .returning({
+      id: tattooRequest.id,
+      trackingToken: tattooRequest.trackingToken,
+    })
 
   return NextResponse.json(
     { id: r.id, trackingToken: r.trackingToken, isExisting: false },
     { status: 201 },
-  );
+  )
 }

@@ -1,18 +1,20 @@
-"use client";
+'use client'
 
-import { cn } from "@/lib/utils";
-import { Plus } from "lucide-react";
-import type { PreviewItem } from "../hooks/use-tattoo-generation";
+import { Plus } from 'lucide-react'
+import Image from 'next/image'
+import { cn } from '@/lib/utils'
+import type { PreviewItem } from '../hooks/use-tattoo-generation'
+
 interface PreviewGalleryProps {
-  previews: PreviewItem[];
-  selectedId: string | null;
-  onSelect: (id: string) => void;
-  canAdd: boolean;
-  onAdd: () => void;
-  disabled?: boolean;
+  previews: PreviewItem[]
+  selectedId: string | null
+  onSelect: (id: string) => void
+  canAdd: boolean
+  onAdd: () => void
+  disabled?: boolean
 }
 
-const THUMB_SIZE = "size-16 sm:size-20";
+const THUMB_SIZE = 'size-16 sm:size-20'
 
 export default function PreviewGallery({
   previews,
@@ -22,7 +24,7 @@ export default function PreviewGallery({
   onAdd,
   disabled = false,
 }: PreviewGalleryProps) {
-  if (previews.length === 0) return null;
+  if (previews.length === 0) return null
 
   return (
     <div className="space-y-3">
@@ -32,7 +34,7 @@ export default function PreviewGallery({
 
       <div className="flex items-center gap-3">
         {previews.map((preview, index) => {
-          const isSelected = preview.id === selectedId;
+          const isSelected = preview.id === selectedId
 
           return (
             <button
@@ -43,17 +45,20 @@ export default function PreviewGallery({
               aria-label={`Seleccionar diseño ${index + 1}`}
               aria-pressed={isSelected}
               className={cn(
-                "group relative shrink-0 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                'group relative shrink-0 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
                 THUMB_SIZE,
                 isSelected
-                  ? "ring-[3px] ring-primary ring-offset-2 ring-offset-background"
-                  : "ring-1 ring-border opacity-70 hover:opacity-100",
-                disabled && "pointer-events-none opacity-50",
+                  ? 'ring-[3px] ring-primary ring-offset-2 ring-offset-background'
+                  : 'ring-1 ring-border opacity-70 hover:opacity-100',
+                disabled && 'pointer-events-none opacity-50',
               )}
             >
-              <img
+              <Image
                 src={preview.dataUrl}
                 alt={`Diseño generado ${index + 1}`}
+                width={80}
+                height={80}
+                unoptimized
                 className="h-full w-full rounded-full object-cover"
                 draggable={false}
               />
@@ -61,7 +66,7 @@ export default function PreviewGallery({
                 <div className="absolute inset-0 rounded-full bg-background/20 opacity-0 transition-opacity group-hover:opacity-100" />
               )}
             </button>
-          );
+          )
         })}
         {canAdd && (
           <button
@@ -70,9 +75,9 @@ export default function PreviewGallery({
             onClick={onAdd}
             aria-label="Generar nuevo diseño"
             className={cn(
-              "flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-border bg-card/50 text-muted-foreground transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+              'flex shrink-0 items-center justify-center rounded-full border-2 border-dashed border-border bg-card/50 text-muted-foreground transition-all hover:border-primary hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background',
               THUMB_SIZE,
-              disabled && "pointer-events-none opacity-50",
+              disabled && 'pointer-events-none opacity-50',
             )}
           >
             <Plus className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -80,5 +85,5 @@ export default function PreviewGallery({
         )}
       </div>
     </div>
-  );
+  )
 }

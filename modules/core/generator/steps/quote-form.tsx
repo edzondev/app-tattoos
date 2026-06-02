@@ -1,34 +1,35 @@
-"use client";
+'use client'
 
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { QuoteFormSchema, type QuoteFormInput } from "@/modules/schemas/tattoo";
-import { useR2PresignedUpload } from "../hooks/use-r2-presigned-upload";
-import { api, ApiError } from "@/lib/api";
-import { Button } from "@/modules/core/components/ui/button";
+import { zodResolver } from '@hookform/resolvers/zod'
+import { AlertCircle, ArrowLeft, Loader2, Send } from 'lucide-react'
+import Image from 'next/image'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { ApiError, api } from '@/lib/api'
+import { Button } from '@/modules/core/components/ui/button'
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/modules/core/components/ui/field";
-import { Input } from "@/modules/core/components/ui/input";
-import { Textarea } from "@/modules/core/components/ui/textarea";
-import { AlertCircle, ArrowLeft, Loader2, Send } from "lucide-react";
-import { useState } from "react";
-import type { PreviewItem } from "../hooks/use-tattoo-generation";
+} from '@/modules/core/components/ui/field'
+import { Input } from '@/modules/core/components/ui/input'
+import { Textarea } from '@/modules/core/components/ui/textarea'
+import { type QuoteFormInput, QuoteFormSchema } from '@/modules/schemas/tattoo'
+import { useR2PresignedUpload } from '../hooks/use-r2-presigned-upload'
+import type { PreviewItem } from '../hooks/use-tattoo-generation'
 
 interface QuoteFormProps {
-  requestId: string;
-  selectedPreview: PreviewItem;
-  onSuccess: (requestCode: string, trackingToken: string) => void;
-  onBack: () => void;
+  requestId: string
+  selectedPreview: PreviewItem
+  onSuccess: (requestCode: string, trackingToken: string) => void
+  onBack: () => void
 }
 
 type SubmitQuoteResponse = {
-  requestCode: string;
-  trackingToken: string;
-};
+  requestCode: string
+  trackingToken: string
+}
 
 function ErrorBanner({ message }: { message: string }) {
   return (
@@ -36,10 +37,10 @@ function ErrorBanner({ message }: { message: string }) {
       role="alert"
       className="flex items-start gap-2 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3"
     >
-      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+      <AlertCircle className="mt-0.5 size-4 shrink-0 text-destructive" />
       <p className="font-grotesk text-sm text-destructive">{message}</p>
     </div>
-  );
+  )
 }
 
 export default function QuoteForm({
@@ -48,9 +49,9 @@ export default function QuoteForm({
   onSuccess,
   onBack,
 }: QuoteFormProps) {
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const { presignAndUpload, isUploading } = useR2PresignedUpload();
+  const { presignAndUpload, isUploading } = useR2PresignedUpload()
 
   const {
     register,
@@ -58,25 +59,25 @@ export default function QuoteForm({
     formState: { errors, isSubmitting },
   } = useForm<QuoteFormInput>({
     resolver: zodResolver(QuoteFormSchema),
-    mode: "onTouched",
-  });
+    mode: 'onTouched',
+  })
 
-  const isBusy = isSubmitting || isUploading;
+  const isBusy = isSubmitting || isUploading
 
   const onSubmit = async (values: QuoteFormInput) => {
-    setSubmitError(null);
+    setSubmitError(null)
 
     try {
       const { r2Key, mimeType, sizeBytes } = await presignAndUpload(
         requestId,
         selectedPreview.dataUrl,
         selectedPreview.mimeType,
-      );
+      )
 
       const result = await api<SubmitQuoteResponse>(
         `/api/request/${requestId}/submit-quote`,
         {
-          method: "POST",
+          method: 'POST',
           body: JSON.stringify({
             ...values,
             r2Key,
@@ -84,35 +85,38 @@ export default function QuoteForm({
             sizeBytes,
           }),
         },
-      );
+      )
 
-      onSuccess(result.requestCode, result.trackingToken);
+      onSuccess(result.requestCode, result.trackingToken)
     } catch (err) {
       if (err instanceof ApiError) {
-        const body = err.body as Record<string, unknown> | null;
-        if (body?.error === "already_submitted") {
+        const body = err.body as Record<string, unknown> | null
+        if (body?.error === 'already_submitted') {
           setSubmitError(
-            "Esta solicitud ya fue enviada anteriormente. Recarga la página para comenzar de nuevo.",
-          );
-          return;
+            'Esta solicitud ya fue enviada anteriormente. Recarga la página para comenzar de nuevo.',
+          )
+          return
         }
       }
       setSubmitError(
         err instanceof Error
           ? err.message
-          : "Ocurrió un error al enviar. Por favor, intenta de nuevo.",
-      );
+          : 'Ocurrió un error al enviar. Por favor, intenta de nuevo.',
+      )
     }
-  };
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <FieldGroup>
         <div className="flex items-center gap-4 rounded-xl border border-border bg-card/50 p-3">
-          <img
+          <Image
             src={selectedPreview.dataUrl}
             alt="Diseño seleccionado"
-            className="h-20 w-20 shrink-0 rounded-lg object-cover shadow-sm"
+            width={80}
+            height={80}
+            unoptimized
+            className="size-20 shrink-0 rounded-lg object-cover shadow-sm"
           />
           <div className="min-w-0">
             <p className="font-bebas text-lg tracking-wide leading-tight">
@@ -128,7 +132,7 @@ export default function QuoteForm({
             Distrito <span className="text-destructive">*</span>
           </FieldLabel>
           <Input
-            {...register("district")}
+            {...register('district')}
             placeholder="Ej: Miraflores"
             autoComplete="address-level2"
             disabled={isBusy}
@@ -140,7 +144,7 @@ export default function QuoteForm({
             Disponibilidad <span className="text-destructive">*</span>
           </FieldLabel>
           <Input
-            {...register("availability")}
+            {...register('availability')}
             placeholder="Ej: Fines de semana por la tarde"
             disabled={isBusy}
           />
@@ -149,7 +153,7 @@ export default function QuoteForm({
         <Field>
           <FieldLabel>Comentarios adicionales (opcional)</FieldLabel>
           <Textarea
-            {...register("extraComments")}
+            {...register('extraComments')}
             placeholder="Ej: Tengo sensibilidad en esa zona, prefiero sesiones cortas…"
             className="min-h-20"
             disabled={isBusy}
@@ -167,7 +171,7 @@ export default function QuoteForm({
             disabled={isBusy}
             className="font-grotesk sm:w-auto"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
             Volver al diseño
           </Button>
 
@@ -178,12 +182,12 @@ export default function QuoteForm({
           >
             {isBusy ? (
               <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {isUploading ? "Subiendo imagen…" : "Enviando solicitud…"}
+                <Loader2 className="size-4 animate-spin" />
+                {isUploading ? 'Subiendo imagen…' : 'Enviando solicitud…'}
               </>
             ) : (
               <>
-                <Send className="h-4 w-4" />
+                <Send className="size-4" />
                 Enviar solicitud de cotización
               </>
             )}
@@ -191,5 +195,5 @@ export default function QuoteForm({
         </div>
       </FieldGroup>
     </form>
-  );
+  )
 }

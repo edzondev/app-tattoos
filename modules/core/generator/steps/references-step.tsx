@@ -1,16 +1,15 @@
-
+import { Controller, useFormContext } from 'react-hook-form'
 import {
   Field,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/modules/core/components/ui/field";
-import { Controller, useFormContext } from "react-hook-form";
-import { MasterSchemaType } from "@/modules/schemas/tattoo";
-import { Textarea } from "@/modules/core/components/ui/textarea";
+} from '@/modules/core/components/ui/field'
+import { Textarea } from '@/modules/core/components/ui/textarea'
+import type { MasterSchemaType } from '@/modules/schemas/tattoo'
 
 export default function ReferencesStep() {
-  const { control } = useFormContext<MasterSchemaType>();
+  const { control } = useFormContext<MasterSchemaType>()
 
   return (
     <FieldGroup>
@@ -35,5 +34,5 @@ export default function ReferencesStep() {
         )}
       />
     </FieldGroup>
-  );
+  )
 }

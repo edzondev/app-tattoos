@@ -1,235 +1,231 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { renderHook, act } from "@testing-library/react";
-import { useDebouncedCallback } from "@/modules/hooks/use-debounce";
+import { act, renderHook } from '@testing-library/react'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useDebouncedCallback } from '@/modules/hooks/use-debounce'
 
-describe("useDebouncedCallback", () => {
+describe('useDebouncedCallback', () => {
   beforeEach(() => {
-    vi.useFakeTimers();
-  });
+    vi.useFakeTimers()
+  })
 
   afterEach(() => {
-    vi.useRealTimers();
-  });
+    vi.useRealTimers()
+  })
 
-  it("returns a stable function reference", () => {
-    const callback = vi.fn();
+  it('returns a stable function reference', () => {
+    const callback = vi.fn()
     const { result, rerender } = renderHook(() =>
       useDebouncedCallback(callback, 300),
-    );
+    )
 
-    const first = result.current;
-    rerender();
-    expect(result.current).toBe(first);
-  });
+    const first = result.current
+    rerender()
+    expect(result.current).toBe(first)
+  })
 
-  it("does not invoke the callback immediately", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 300));
-
-    act(() => {
-      result.current("arg1");
-    });
-
-    expect(callback).not.toHaveBeenCalled();
-  });
-
-  it("invokes the callback after the delay elapses", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 300));
+  it('does not invoke the callback immediately', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 300))
 
     act(() => {
-      result.current("hello");
-    });
+      result.current('arg1')
+    })
+
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('invokes the callback after the delay elapses', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 300))
 
     act(() => {
-      vi.advanceTimersByTime(300);
-    });
-
-    expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith("hello");
-  });
-
-  it("does not invoke the callback before the delay elapses", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 500));
+      result.current('hello')
+    })
 
     act(() => {
-      result.current();
-    });
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith('hello')
+  })
+
+  it('does not invoke the callback before the delay elapses', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 500))
 
     act(() => {
-      vi.advanceTimersByTime(499);
-    });
-
-    expect(callback).not.toHaveBeenCalled();
-  });
-
-  it("resets the timer on each call (debounce behaviour)", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 300));
+      result.current()
+    })
 
     act(() => {
-      result.current("first");
-    });
+      vi.advanceTimersByTime(499)
+    })
+
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('resets the timer on each call (debounce behaviour)', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 300))
 
     act(() => {
-      vi.advanceTimersByTime(200);
-    });
+      result.current('first')
+    })
 
     act(() => {
-      result.current("second");
-    });
+      vi.advanceTimersByTime(200)
+    })
 
     act(() => {
-      vi.advanceTimersByTime(200);
-    });
-
-    expect(callback).not.toHaveBeenCalled();
+      result.current('second')
+    })
 
     act(() => {
-      vi.advanceTimersByTime(100);
-    });
+      vi.advanceTimersByTime(200)
+    })
 
-    expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith("second");
-  });
-
-  it("invokes the callback only once after rapid successive calls", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 300));
+    expect(callback).not.toHaveBeenCalled()
 
     act(() => {
-      result.current(1);
-      result.current(2);
-      result.current(3);
-    });
+      vi.advanceTimersByTime(100)
+    })
+
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith('second')
+  })
+
+  it('invokes the callback only once after rapid successive calls', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 300))
 
     act(() => {
-      vi.advanceTimersByTime(300);
-    });
-
-    expect(callback).toHaveBeenCalledTimes(1);
-    expect(callback).toHaveBeenCalledWith(3);
-  });
-
-  it("forwards all arguments to the callback", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() =>
-      useDebouncedCallback(callback, 100),
-    );
+      result.current(1)
+      result.current(2)
+      result.current(3)
+    })
 
     act(() => {
-      result.current("a", "b", "c");
-    });
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(callback).toHaveBeenCalledTimes(1)
+    expect(callback).toHaveBeenCalledWith(3)
+  })
+
+  it('forwards all arguments to the callback', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 100))
 
     act(() => {
-      vi.advanceTimersByTime(100);
-    });
-
-    expect(callback).toHaveBeenCalledWith("a", "b", "c");
-  });
-
-  it("uses 400ms as the default delay when none is provided", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback));
+      result.current('a', 'b', 'c')
+    })
 
     act(() => {
-      result.current();
-    });
+      vi.advanceTimersByTime(100)
+    })
+
+    expect(callback).toHaveBeenCalledWith('a', 'b', 'c')
+  })
+
+  it('uses 400ms as the default delay when none is provided', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback))
 
     act(() => {
-      vi.advanceTimersByTime(399);
-    });
-
-    expect(callback).not.toHaveBeenCalled();
+      result.current()
+    })
 
     act(() => {
-      vi.advanceTimersByTime(1);
-    });
+      vi.advanceTimersByTime(399)
+    })
 
-    expect(callback).toHaveBeenCalledTimes(1);
-  });
-
-  it("always invokes the latest version of the callback", () => {
-    const firstCallback = vi.fn();
-    const secondCallback = vi.fn();
-
-    let cb = firstCallback;
-    const { result, rerender } = renderHook(() =>
-      useDebouncedCallback(cb, 300),
-    );
+    expect(callback).not.toHaveBeenCalled()
 
     act(() => {
-      result.current();
-    });
+      vi.advanceTimersByTime(1)
+    })
 
-    cb = secondCallback;
-    rerender();
+    expect(callback).toHaveBeenCalledTimes(1)
+  })
+
+  it('always invokes the latest version of the callback', () => {
+    const firstCallback = vi.fn()
+    const secondCallback = vi.fn()
+
+    let cb = firstCallback
+    const { result, rerender } = renderHook(() => useDebouncedCallback(cb, 300))
 
     act(() => {
-      vi.advanceTimersByTime(300);
-    });
+      result.current()
+    })
 
-    expect(firstCallback).not.toHaveBeenCalled();
-    expect(secondCallback).toHaveBeenCalledTimes(1);
-  });
+    cb = secondCallback
+    rerender()
 
-  it("does not fire after the hook is unmounted", () => {
-    const callback = vi.fn();
+    act(() => {
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(firstCallback).not.toHaveBeenCalled()
+    expect(secondCallback).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not fire after the hook is unmounted', () => {
+    const callback = vi.fn()
     const { result, unmount } = renderHook(() =>
       useDebouncedCallback(callback, 300),
-    );
+    )
 
     act(() => {
-      result.current();
-    });
+      result.current()
+    })
 
-    unmount();
-
-    act(() => {
-      vi.advanceTimersByTime(300);
-    });
-
-    expect(callback).not.toHaveBeenCalled();
-  });
-
-  it("can be called multiple times across separate debounce windows", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 200));
+    unmount()
 
     act(() => {
-      result.current("first-window");
-    });
+      vi.advanceTimersByTime(300)
+    })
+
+    expect(callback).not.toHaveBeenCalled()
+  })
+
+  it('can be called multiple times across separate debounce windows', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 200))
 
     act(() => {
-      vi.advanceTimersByTime(200);
-    });
+      result.current('first-window')
+    })
 
     act(() => {
-      result.current("second-window");
-    });
+      vi.advanceTimersByTime(200)
+    })
 
     act(() => {
-      vi.advanceTimersByTime(200);
-    });
-
-    expect(callback).toHaveBeenCalledTimes(2);
-    expect(callback).toHaveBeenNthCalledWith(1, "first-window");
-    expect(callback).toHaveBeenNthCalledWith(2, "second-window");
-  });
-
-  it("handles a delay of 0ms", () => {
-    const callback = vi.fn();
-    const { result } = renderHook(() => useDebouncedCallback(callback, 0));
+      result.current('second-window')
+    })
 
     act(() => {
-      result.current("immediate");
-    });
+      vi.advanceTimersByTime(200)
+    })
+
+    expect(callback).toHaveBeenCalledTimes(2)
+    expect(callback).toHaveBeenNthCalledWith(1, 'first-window')
+    expect(callback).toHaveBeenNthCalledWith(2, 'second-window')
+  })
+
+  it('handles a delay of 0ms', () => {
+    const callback = vi.fn()
+    const { result } = renderHook(() => useDebouncedCallback(callback, 0))
 
     act(() => {
-      vi.advanceTimersByTime(0);
-    });
+      result.current('immediate')
+    })
 
-    expect(callback).toHaveBeenCalledWith("immediate");
-  });
-});
+    act(() => {
+      vi.advanceTimersByTime(0)
+    })
+
+    expect(callback).toHaveBeenCalledWith('immediate')
+  })
+})

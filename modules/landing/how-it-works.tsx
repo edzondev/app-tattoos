@@ -1,29 +1,29 @@
-import { Sparkles, MessageSquare, CalendarCheck } from "lucide-react";
-import { Card, CardContent } from "@/modules/core/components/ui/card";
+import { CalendarCheck, MessageSquare, Sparkles } from 'lucide-react'
+import { Card, CardContent } from '@/modules/core/components/ui/card'
 
 const steps = [
   {
     icon: Sparkles,
-    number: "01",
-    title: "Genera tu idea",
+    number: '01',
+    title: 'Genera tu idea',
     description:
-      "Usa nuestra herramienta con IA para diseñar tu tatuaje ideal. Elige estilo, parte del cuerpo y deja que la tecnología haga su magia.",
+      'Usa nuestra herramienta con IA para diseñar tu tatuaje ideal. Elige estilo, parte del cuerpo y deja que la tecnología haga su magia.',
   },
   {
     icon: MessageSquare,
-    number: "02",
-    title: "Solicita cotización",
+    number: '02',
+    title: 'Solicita cotización',
     description:
-      "Envía tu diseño favorito y recibe una cotización personalizada. Sin compromiso, respuesta en menos de 24 horas.",
+      'Envía tu diseño favorito y recibe una cotización personalizada. Sin compromiso, respuesta en menos de 24 horas.',
   },
   {
     icon: CalendarCheck,
-    number: "03",
-    title: "Agenda tu cita",
+    number: '03',
+    title: 'Agenda tu cita',
     description:
-      "Paga tu seña para confirmar la cita. El monto se descuenta del precio total. ¡Ya casi tienes tu nuevo tattoo!",
+      'Paga tu seña para confirmar la cita. El monto se descuenta del precio total. ¡Ya casi tienes tu nuevo tattoo!',
   },
-];
+]
 
 export default function HowItWorks() {
   return (
@@ -34,7 +34,7 @@ export default function HowItWorks() {
       <div className="container mx-auto px-4 lg:px-6">
         <div className="mb-16 text-center">
           <h2 className="font-bebas  text-4xl tracking-wide sm:text-5xl md:text-6xl">
-            Cómo{" "}
+            Cómo{' '}
             <span className="bg-linear-to-r from-primary to-tertiary bg-clip-text text-transparent">
               funciona
             </span>
@@ -53,7 +53,7 @@ export default function HowItWorks() {
             >
               <CardContent className="p-8">
                 <div className="mb-6 flex items-center justify-between">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 transition-colors duration-300 group-hover:bg-primary/20">
+                  <div className="flex size-12 items-center justify-center rounded-xl bg-primary/10 transition-colors duration-300 group-hover:bg-primary/20">
                     <step.icon size={22} className="text-primary" />
                   </div>
                   <span className="font-bebas text-4xl text-border/60">
@@ -72,5 +72,5 @@ export default function HowItWorks() {
         </div>
       </div>
     </section>
-  );
+  )
 }

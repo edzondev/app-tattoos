@@ -1,11 +1,18 @@
-import { Controller, useFormContext } from "react-hook-form";
+import { Controller, useFormContext } from 'react-hook-form'
+import {
+  BODY_PARTS,
+  COLOR_OPTIONS,
+  SIZE_OPTIONS,
+  STYLE_OPTIONS,
+} from '@/constants/generator'
+import { cn } from '@/lib/utils'
 import {
   Field,
   FieldContent,
   FieldError,
   FieldGroup,
   FieldLabel,
-} from "@/modules/core/components/ui/field";
+} from '@/modules/core/components/ui/field'
 import {
   Select,
   SelectContent,
@@ -13,22 +20,12 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/modules/core/components/ui/select";
-import { MasterSchemaType } from "@/modules/schemas/tattoo";
-import {
-  BODY_PARTS,
-  COLOR_OPTIONS,
-  SIZE_OPTIONS,
-  STYLE_OPTIONS,
-} from "@/constants/generator";
-import { cn } from "@/lib/utils";
-import { Slider } from "@/modules/core/components/ui/slider";
+} from '@/modules/core/components/ui/select'
+import { Slider } from '@/modules/core/components/ui/slider'
+import type { MasterSchemaType } from '@/modules/schemas/tattoo'
 
 export default function BasicStep() {
-  const {
-    control,
-    setValue,
-  } = useFormContext<MasterSchemaType>();
+  const { control, setValue } = useFormContext<MasterSchemaType>()
   return (
     <FieldGroup>
       <Controller
@@ -44,13 +41,13 @@ export default function BasicStep() {
               {STYLE_OPTIONS.map((option) => (
                 <button
                   key={option.value}
-                  type="button" // importante para evitar submit accidental
+                  type="button"
                   onClick={() => field.onChange(option.value)}
                   className={cn(
-                    "flex items-center gap-3 rounded-lg border px-4 py-3 text-left font-body text-sm transition-all",
+                    'flex items-center gap-3 rounded-lg border px-4 py-3 text-left font-body text-sm transition-all',
                     option.value === field.value
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30",
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30',
                   )}
                 >
                   <span className="text-lg">{option.icon}</span>
@@ -86,7 +83,7 @@ export default function BasicStep() {
                   placeholder="Selecciona la zona del cuerpo"
                 />
               </SelectTrigger>
-              <SelectContent position="popper">
+              <SelectContent>
                 <SelectGroup>
                   {BODY_PARTS.map((item) => (
                     <SelectItem key={item} value={item}>
@@ -114,10 +111,10 @@ export default function BasicStep() {
                   type="button" // importante para evitar submit accidental
                   onClick={() => field.onChange(option.value)}
                   className={cn(
-                    "rounded-lg border px-4 py-3 text-left font-grotesk transition-all",
+                    'rounded-lg border px-4 py-3 text-left font-grotesk transition-all',
                     option.value === field.value // ← comparación directa, sin toLowerCase
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30",
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30',
                   )}
                 >
                   <span className="text-sm font-medium">{option.label}</span>
@@ -144,10 +141,10 @@ export default function BasicStep() {
                   type="button" // importante para evitar submit accidental
                   onClick={() => field.onChange(option.value)}
                   className={cn(
-                    "flex-1 rounded-lg border px-4 py-3 text-sm font-grotesk transition-all",
+                    'flex-1 rounded-lg border px-4 py-3 text-sm font-grotesk transition-all',
                     option.value === field.value // ← comparación directa, sin toLowerCase
-                      ? "border-primary bg-primary/10 text-primary"
-                      : "border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30",
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30',
                   )}
                 >
                   <span className="text-sm font-medium">{option.label}</span>
@@ -168,7 +165,7 @@ export default function BasicStep() {
             </FieldLabel>
             <Slider
               value={[field.value]}
-              onValueChange={([v]) => setValue("detailLevel", v)}
+              onValueChange={([v]) => setValue('detailLevel', v)}
               min={1}
               max={5}
               step={1}
@@ -181,5 +178,5 @@ export default function BasicStep() {
         )}
       />
     </FieldGroup>
-  );
+  )
 }

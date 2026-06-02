@@ -1,107 +1,104 @@
-"use client";
+'use client'
 
-import { useCallback, useEffect, useState } from "react";
-import { Button } from "@/modules/core/components/ui/button";
-import { Plus, Loader2 } from "lucide-react";
-import PortfolioGrid, { type PortfolioItemWithImages } from "./portfolio-grid";
-import PortfolioForm from "./portfolio-form";
-import PortfolioDeleteDialog from "./portfolio-delete-dialog";
+import { Loader2, Plus } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Button } from '@/modules/core/components/ui/button'
+import PortfolioDeleteDialog from './portfolio-delete-dialog'
+import PortfolioForm from './portfolio-form'
+import PortfolioGrid, { type PortfolioItemWithImages } from './portfolio-grid'
 
-type View = "list" | "create" | "edit";
+type View = 'list' | 'create' | 'edit'
 
 export default function PortfolioTab() {
-  const [items, setItems] = useState<PortfolioItemWithImages[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState<View>("list");
-  const [editItem, setEditItem] = useState<PortfolioItemWithImages | null>(
+  const [items, setItems] = useState<PortfolioItemWithImages[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [view, setView] = useState<View>('list')
+  const [editItem, setEditItem] = useState<PortfolioItemWithImages | null>(null)
+  const [deleteItem, setDeleteItem] = useState<PortfolioItemWithImages | null>(
     null,
-  );
-  const [deleteItem, setDeleteItem] =
-    useState<PortfolioItemWithImages | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  )
+  const [isDeleting, setIsDeleting] = useState(false)
 
-  const fetchItems = useCallback(async () => {
-    setIsLoading(true);
+  const fetchItems = async () => {
+    setIsLoading(true)
     try {
-      const res = await fetch("/api/admin/portfolio");
+      const res = await fetch('/api/admin/portfolio')
       if (res.ok) {
-        setItems(await res.json());
+        setItems(await res.json())
       }
     } finally {
-      setIsLoading(false);
+      setIsLoading(false)
     }
-  }, []);
+  }
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: only fetch on mount
   useEffect(() => {
-    fetchItems();
-  }, [fetchItems]);
+    fetchItems()
+  }, [])
 
   const handleEdit = (item: PortfolioItemWithImages) => {
-    setEditItem(item);
-    setView("edit");
-  };
+    setEditItem(item)
+    setView('edit')
+  }
 
   const handleDelete = (item: PortfolioItemWithImages) => {
-    setDeleteItem(item);
-  };
+    setDeleteItem(item)
+  }
 
   const confirmDelete = async () => {
-    if (!deleteItem) return;
-    setIsDeleting(true);
+    if (!deleteItem) return
+    setIsDeleting(true)
     try {
       const res = await fetch(`/api/admin/portfolio/${deleteItem.id}`, {
-        method: "DELETE",
-      });
+        method: 'DELETE',
+      })
       if (res.ok) {
-        setItems((prev) => prev.filter((i) => i.id !== deleteItem.id));
-        setDeleteItem(null);
+        setItems((prev) => prev.filter((i) => i.id !== deleteItem.id))
+        setDeleteItem(null)
       }
     } finally {
-      setIsDeleting(false);
+      setIsDeleting(false)
     }
-  };
+  }
 
   const handleSaved = () => {
-    setView("list");
-    setEditItem(null);
-    fetchItems();
-  };
+    setView('list')
+    setEditItem(null)
+    fetchItems()
+  }
 
   const handleCancel = () => {
-    setView("list");
-    setEditItem(null);
-  };
+    setView('list')
+    setEditItem(null)
+  }
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" />
       </div>
-    );
+    )
   }
 
-  if (view === "create") {
-    return <PortfolioForm onSaved={handleSaved} onCancel={handleCancel} />;
+  if (view === 'create') {
+    return <PortfolioForm onSaved={handleSaved} onCancel={handleCancel} />
   }
 
-  if (view === "edit" && editItem) {
+  if (view === 'edit' && editItem) {
     return (
       <PortfolioForm
         editItem={editItem}
         onSaved={handleSaved}
         onCancel={handleCancel}
       />
-    );
+    )
   }
 
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h2 className="font-bebas text-2xl tracking-wide">Portafolio</h2>
-        <Button
-          onClick={() => setView("create")}
-          className="gap-1"
-        >
+        <Button onClick={() => setView('create')} className="gap-1">
           <Plus size={16} />
           Nuevo trabajo
         </Button>
@@ -112,7 +109,7 @@ export default function PortfolioTab() {
           <p className="text-muted-foreground font-grotesk mb-4">
             Aún no hay trabajos en el portafolio.
           </p>
-          <Button onClick={() => setView("create")} className="gap-1">
+          <Button onClick={() => setView('create')} className="gap-1">
             <Plus size={16} />
             Agregar primer trabajo
           </Button>
@@ -134,5 +131,5 @@ export default function PortfolioTab() {
         />
       )}
     </div>
-  );
+  )
 }

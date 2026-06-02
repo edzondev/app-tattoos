@@ -1,5 +1,5 @@
-import HeaderText from "@/modules/core/components/shared/header-text";
-import GeneratorClient from "@/modules/core/generator/client";
+import HeaderText from '@/modules/core/components/shared/header-text'
+import GeneratorClient from '@/modules/core/generator/client'
 
 export default function GeneratorPage() {
   return (
@@ -16,5 +16,5 @@ export default function GeneratorPage() {
         <GeneratorClient />
       </div>
     </div>
-  );
+  )
 }
