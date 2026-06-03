@@ -67,12 +67,15 @@ export async function POST(req: Request) {
     })
   }
 
+  const now = new Date()
   const [r] = await db
     .insert(tattooRequest)
     .values({
       ...step1,
       fullName: fullName.trim(),
       whatsappE164,
+      createdAt: now,
+      updatedAt: now,
     })
     .returning({
       id: tattooRequest.id,

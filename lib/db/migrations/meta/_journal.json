@@ -15,6 +15,20 @@
       "when": 1780441828888,
       "tag": "0001_blushing_sally_floyd",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1780512715018,
+      "tag": "0002_remarkable_violations",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1780518000000,
+      "tag": "0003_tattoo_request_updated_at_default",
+      "breakpoints": true
     }
   ]
 }

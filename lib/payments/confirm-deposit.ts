@@ -1,5 +1,4 @@
 import { eq } from 'drizzle-orm'
-import { revalidatePath } from 'next/cache'
 import { db } from '@/lib/db'
 import { tattooRequest } from '@/lib/db/schema'
 export type MercadoPagoPaymentSnapshot = {
@@ -64,10 +63,6 @@ export async function confirmDepositFromMercadoPagoPayment(
           : undefined,
     })
     .where(eq(tattooRequest.id, tr.id))
-
-  if (tr.requestCode) {
-    revalidatePath(`/seguimiento/${tr.requestCode}`)
-  }
 
   return { updated: true, status: 'approved' }
 }
