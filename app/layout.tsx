@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Bebas_Neue, Geist, Space_Grotesk } from 'next/font/google'
+import { Bebas_Neue, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import {
   APP_DESCRIPTION_LONG,
@@ -7,9 +7,6 @@ import {
   APP_NAME,
   APP_TAGLINE,
 } from '@/lib/config/brand'
-import { cn } from '@/lib/utils'
-
-const geist = Geist({ subsets: ['latin'], variable: '--font-sans' })
 
 const bebasNeue = Bebas_Neue({
   variable: '--font-bebas-neue',
@@ -54,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={cn('font-sans', geist.variable)}>
+    <html lang="es">
       <body
         className={`${bebasNeue.variable} ${spaceGrotesk.variable} antialiased`}
       >

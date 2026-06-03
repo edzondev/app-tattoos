@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import Link from 'next/link'
 import type { RequestStatus, TattooStyle } from '@/lib/db/enums'
 import { getStatusLabel, getStyleLabel } from '@/lib/labels'
+import { formatSolesFromCents } from '@/lib/money'
 
 // This type is used to define the shape of our data.
 export type RequestTattoo = {
@@ -59,7 +60,7 @@ export const columns: ColumnDef<RequestTattoo>[] = [
     header: 'Precio',
     cell: ({ row }) => {
       const price = row.getValue<number | null>('priceCents')
-      return price ? `S/ ${price}` : '---'
+      return price ? formatSolesFromCents(price) : 'N/A'
     },
   },
 ]

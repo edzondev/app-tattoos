@@ -2,13 +2,33 @@ import { and, eq, isNull, notInArray, or } from 'drizzle-orm'
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/db'
 import { tattooRequest } from '@/lib/db/schema'
+import { getClientIp } from '@/lib/get-client-ip'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { CreateRequestSchema } from '@/modules/schemas/tattoo'
+
+const REQUEST_RATE_LIMIT = {
+  maxAttempts: 5,
+  windowMs: 60 * 60 * 1000,
+}
 
 function normalizeWhatsapp(raw: string): string {
   return raw.replace(/[\s\-().]/g, '')
 }
 
 export async function POST(req: Request) {
+  const ip = getClientIp(req.headers)
+  const rateLimitResult = await checkRateLimit(ip, REQUEST_RATE_LIMIT)
+  if (!rateLimitResult.allowed) {
+    return NextResponse.json(
+      {
+        error: 'rate_limit_exceeded',
+        message:
+          'Alcanzaste el límite de solicitudes por hora. Intenta nuevamente más tarde.',
+      },
+      { status: 429 },
+    )
+  }
+
   const json = await req.json().catch(() => null)
   const parsed = CreateRequestSchema.safeParse(json)
   if (!parsed.success) {

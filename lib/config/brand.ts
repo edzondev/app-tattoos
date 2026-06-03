@@ -12,8 +12,21 @@ export function getAppCopyright(): string {
 }
 
 export const WHATSAPP_TEMPLATES = {
-  clientConfirmation: (requestCode: string): string =>
-    `Hola! Acabo de enviar mi solicitud de diseño en ${APP_NAME}. Mi código es ${requestCode}. ¿Podrían darme más información?`,
+  clientConfirmation: (params: {
+    requestCode: string
+    fullName: string
+    trackingUrl: string
+    designUrl: string
+  }): string =>
+    [
+      `Hola! Soy ${params.fullName} y acabo de enviar mi solicitud de diseño en ${APP_NAME}.`,
+      ``,
+      `*Código:* ${params.requestCode}`,
+      `*Seguimiento:* ${params.trackingUrl}`,
+      `*Diseño:* ${params.designUrl}`,
+      ``,
+      `¿Podrían darme más información?`,
+    ].join('\n'),
 
   adminQuote: (
     name: string,

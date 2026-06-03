@@ -67,7 +67,7 @@ export default function GeneratorClient() {
               variant="outline"
               onClick={goPrev}
               disabled={isTransitioning}
-              className="font-body"
+              className="font-geist"
             >
               <ArrowLeft size={16} />
               Atrás
@@ -77,7 +77,7 @@ export default function GeneratorClient() {
               type="button"
               onClick={goNext}
               disabled={isTransitioning}
-              className="flex-1 font-body font-semibold"
+              className="flex-1 font-geist font-semibold"
               size="lg"
             >
               {isTransitioning ? (
@@ -94,7 +94,7 @@ export default function GeneratorClient() {
             variant="ghost"
             onClick={goPrev}
             disabled={isTransitioning}
-            className="font-body text-muted-foreground"
+            className="font-geist text-muted-foreground"
           >
             <ArrowLeft size={16} />
             Volver a referencias

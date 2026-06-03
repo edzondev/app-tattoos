@@ -44,7 +44,7 @@ export default function BasicStep() {
                   type="button"
                   onClick={() => field.onChange(option.value)}
                   className={cn(
-                    'flex items-center gap-3 rounded-lg border px-4 py-3 text-left font-body text-sm transition-all',
+                    'flex items-center gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-all font-grotesk',
                     option.value === field.value
                       ? 'border-primary bg-primary/10 text-primary'
                       : 'border-border/50 bg-card/50 text-muted-foreground hover:border-primary/30',

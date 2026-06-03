@@ -6,6 +6,7 @@ import type {
 } from '@/lib/db/enums'
 
 export type TrackingRequest = {
+  id: string
   requestCode: string | null
   status: RequestStatus | null
   style: TattooStyle
@@ -22,6 +23,10 @@ export type TrackingRequest = {
   appointmentAt: Date | null
   finishedAt: Date | null
   selectedImagePublicUrl: string | null
+  currency: string
+  priceCents: number | null
+  depositCents: number | null
+  paymentStatus: string | null
 }
 
 export type TimelineEvent = {

@@ -48,6 +48,7 @@ export default async function AdminPage({ searchParams }: Props) {
     columns: {
       requestCode: true,
       fullName: true,
+      priceCents: true,
       style: true,
       status: true,
       sentAt: true,
@@ -61,13 +62,13 @@ export default async function AdminPage({ searchParams }: Props) {
       <TabsList className="bg-card border border-border/50 mb-6">
         <TabsTrigger
           value="leads"
-          className="font-body gap-2 data-[state=active]:text-primary"
+          className="font-geist gap-2 data-[state=active]:text-primary"
         >
           <LayoutDashboard size={16} /> Leads
         </TabsTrigger>
         <TabsTrigger
           value="portfolio"
-          className="font-body gap-2 data-[state=active]:text-primary"
+          className="font-geist gap-2 data-[state=active]:text-primary"
         >
           <ImageIcon size={16} /> Portafolio
         </TabsTrigger>
@@ -77,9 +78,7 @@ export default async function AdminPage({ searchParams }: Props) {
           <AdminFilters />
         </Suspense>
 
-        <div>
-          <DataTable columns={columns} data={data} />
-        </div>
+        <DataTable columns={columns} data={data} />
       </TabsContent>
       <TabsContent value="portfolio">
         <PortfolioTab />

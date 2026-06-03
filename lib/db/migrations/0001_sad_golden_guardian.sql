@@ -1,1 +1,0 @@
-CREATE UNIQUE INDEX "tattoo_request_whatsapp_active_idx" ON "tattoo_request" USING btree ("whatsappE164") WHERE status IS NULL OR status NOT IN ('FINISHED', 'EXPIRED');

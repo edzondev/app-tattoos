@@ -16,22 +16,12 @@ async function sendMagicLinkEmail({
   token: string
   url: string
 }) {
-  try {
-    if (process.env.NODE_ENV !== 'production') {
-      console.log(url)
-      return
-    }
-
-    await resend.emails.send({
-      from: 'noreply@mail.inkyra.app',
-      to: email,
-      subject: 'Tu enlace de acceso',
-      html: `<p>Haz clic <a href="${url}">aquí</a> para ingresar al panel.</p>`,
-    })
-  } catch (e) {
-    console.error('[auth] sendMagicLinkEmail error', e)
-    throw e
-  }
+  await resend.emails.send({
+    from: 'noreply@mail.inkyra.app',
+    to: email,
+    subject: 'Tu enlace de acceso',
+    html: `<p>Haz clic <a href="${url}">aquí</a> para ingresar al panel.</p>`,
+  })
 }
 
 export const auth = betterAuth({

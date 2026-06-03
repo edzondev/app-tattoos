@@ -1,26 +1,46 @@
 import { useEffect, useRef, useState } from 'react'
 import { ApiError, api } from '@/lib/api'
-
-const MAX_ATTEMPTS = 2
+import {
+  PREVIEW_GENERATION_LIMIT_DEFAULT,
+  type PreviewGenerationStatus,
+  previewGenerationLimitReachedMessage,
+} from '@/lib/config/preview-generation'
 
 export type PreviewItem = {
   id: string
   createdAt: number
   dataUrl: string
   mimeType: string
+  r2Key: string
+  watermarkedR2Key: string
+  sizeBytes: number
   refineText?: string
 }
 
-type PreviewResponse = {
+type PreviewResponse = PreviewGenerationStatus & {
   dataUrl: string
   mimeType: string
+  r2Key: string
+  watermarkedR2Key: string
+  sizeBytes: number
 }
 
-type GenerationState = {
+type GenerationState = PreviewGenerationStatus & {
   previews: PreviewItem[]
   selectedPreviewId: string | null
   isGenerating: boolean
+  isStatusLoaded: boolean
   error: string | null
+}
+
+function applyGenerationStatus(
+  status: PreviewGenerationStatus,
+): Pick<GenerationState, 'generationCount' | 'maxGenerations' | 'canGenerate'> {
+  return {
+    generationCount: status.generationCount,
+    maxGenerations: status.maxGenerations,
+    canGenerate: status.canGenerate,
+  }
 }
 
 export function useTattooGeneration(
@@ -31,20 +51,26 @@ export function useTattooGeneration(
     previews: [],
     selectedPreviewId: null,
     isGenerating: false,
+    isStatusLoaded: false,
     error: null,
+    generationCount: 0,
+    maxGenerations: PREVIEW_GENERATION_LIMIT_DEFAULT,
+    canGenerate: true,
   })
   const lockRef = useRef(false)
   const generatePreviewRef = useRef<(refineText?: string) => Promise<void>>(
     async () => {},
   )
-  const attempts = state.previews.length
-  const canRegenerate = attempts < MAX_ATTEMPTS && !state.isGenerating
 
   const selectedPreview =
     state.previews.find((p) => p.id === state.selectedPreviewId) ?? null
 
+  const canRegenerate = state.canGenerate && !state.isGenerating
+
   const attemptLabel =
-    attempts > 0 ? `Intento ${attempts} de ${MAX_ATTEMPTS}` : ''
+    state.generationCount > 0
+      ? `Intento ${state.generationCount} de ${state.maxGenerations}`
+      : ''
 
   const selectPreview = (id: string) => {
     setState((s) => {
@@ -61,11 +87,10 @@ export function useTattooGeneration(
     }
 
     if (lockRef.current) return
-    if (state.previews.length >= MAX_ATTEMPTS) {
+    if (!state.canGenerate) {
       setState((s) => ({
         ...s,
-        error:
-          'Alcanzaste el límite de 2 diseños para esta solicitud. Escríbenos por WhatsApp para continuar.',
+        error: previewGenerationLimitReachedMessage(s.maxGenerations),
       }))
       return
     }
@@ -89,31 +114,35 @@ export function useTattooGeneration(
         createdAt: Date.now(),
         dataUrl: data.dataUrl,
         mimeType: data.mimeType,
+        r2Key: data.r2Key,
+        watermarkedR2Key: data.watermarkedR2Key,
+        sizeBytes: data.sizeBytes,
         refineText: trimmed,
       }
 
-      setState((s) => {
-        if (s.previews.length >= MAX_ATTEMPTS) {
-          return { ...s, isGenerating: false }
-        }
-
-        const nextPreviews = [...s.previews, newPreview]
-
-        return {
-          ...s,
-          previews: nextPreviews,
-          selectedPreviewId: newPreview.id,
-          isGenerating: false,
-        }
-      })
+      setState((s) => ({
+        ...s,
+        previews: [...s.previews, newPreview],
+        selectedPreviewId: newPreview.id,
+        isGenerating: false,
+        ...applyGenerationStatus(data),
+      }))
     } catch (err: unknown) {
       let message = 'Error al generar el diseño. Intenta de nuevo.'
+      let statusPatch: Partial<GenerationState> = {}
 
       if (err instanceof ApiError && err.status === 403) {
-        const body = err.body as { message?: string } | null
+        const body = err.body as
+          | (PreviewGenerationStatus & {
+              message?: string
+            })
+          | null
         message =
           body?.message ??
-          'Alcanzaste el límite de 2 diseños para esta solicitud. Escríbenos por WhatsApp para continuar.'
+          previewGenerationLimitReachedMessage(state.maxGenerations)
+        if (body?.maxGenerations !== undefined) {
+          statusPatch = applyGenerationStatus(body)
+        }
       } else if (err instanceof Error) {
         message = err.message
       }
@@ -122,6 +151,7 @@ export function useTattooGeneration(
         ...s,
         isGenerating: false,
         error: message,
+        ...statusPatch,
       }))
     } finally {
       lockRef.current = false
@@ -130,20 +160,64 @@ export function useTattooGeneration(
   generatePreviewRef.current = generatePreview
 
   useEffect(() => {
+    if (!requestId) {
+      setState((s) => ({
+        ...s,
+        isStatusLoaded: false,
+        generationCount: 0,
+        maxGenerations: PREVIEW_GENERATION_LIMIT_DEFAULT,
+        canGenerate: true,
+      }))
+      return
+    }
+
+    let cancelled = false
+
+    void (async () => {
+      try {
+        const status = await api<PreviewGenerationStatus>(
+          `/api/request/${requestId}/generation-status`,
+        )
+        if (cancelled) return
+        setState((s) => ({
+          ...s,
+          isStatusLoaded: true,
+          ...applyGenerationStatus(status),
+        }))
+      } catch {
+        if (cancelled) return
+        setState((s) => ({ ...s, isStatusLoaded: true }))
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [requestId])
+
+  useEffect(() => {
     if (!autoGenerate) return
     if (!requestId) return
+    if (!state.isStatusLoaded) return
+    if (!state.canGenerate) return
     if (state.previews.length > 0) return
 
     generatePreviewRef.current()
-  }, [autoGenerate, requestId, state.previews.length])
+  }, [
+    autoGenerate,
+    requestId,
+    state.isStatusLoaded,
+    state.canGenerate,
+    state.previews.length,
+  ])
 
   return {
     previews: state.previews,
     selectedPreview,
     selectedPreviewId: state.selectedPreviewId,
     selectPreview,
-    attempts,
-    maxAttempts: MAX_ATTEMPTS,
+    attempts: state.generationCount,
+    maxAttempts: state.maxGenerations,
     canRegenerate,
     attemptLabel,
     isGenerating: state.isGenerating,

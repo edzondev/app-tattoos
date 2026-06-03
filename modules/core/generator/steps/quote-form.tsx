@@ -16,19 +16,20 @@ import {
 import { Input } from '@/modules/core/components/ui/input'
 import { Textarea } from '@/modules/core/components/ui/textarea'
 import { type QuoteFormInput, QuoteFormSchema } from '@/modules/schemas/tattoo'
-import { useR2PresignedUpload } from '../hooks/use-r2-presigned-upload'
 import type { PreviewItem } from '../hooks/use-tattoo-generation'
 
 interface QuoteFormProps {
   requestId: string
   selectedPreview: PreviewItem
-  onSuccess: (requestCode: string, trackingToken: string) => void
+  onSuccess: (params: SubmitQuoteResponse) => void
   onBack: () => void
 }
 
 type SubmitQuoteResponse = {
   requestCode: string
   trackingToken: string
+  fullName: string
+  designUrl: string
 }
 
 function ErrorBanner({ message }: { message: string }) {
@@ -51,8 +52,6 @@ export default function QuoteForm({
 }: QuoteFormProps) {
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  const { presignAndUpload, isUploading } = useR2PresignedUpload()
-
   const {
     register,
     handleSubmit,
@@ -62,32 +61,27 @@ export default function QuoteForm({
     mode: 'onTouched',
   })
 
-  const isBusy = isSubmitting || isUploading
+  const isBusy = isSubmitting
 
   const onSubmit = async (values: QuoteFormInput) => {
     setSubmitError(null)
 
     try {
-      const { r2Key, mimeType, sizeBytes } = await presignAndUpload(
-        requestId,
-        selectedPreview.dataUrl,
-        selectedPreview.mimeType,
-      )
-
       const result = await api<SubmitQuoteResponse>(
         `/api/request/${requestId}/submit-quote`,
         {
           method: 'POST',
           body: JSON.stringify({
             ...values,
-            r2Key,
-            mimeType,
-            sizeBytes,
+            r2Key: selectedPreview.r2Key,
+            watermarkedR2Key: selectedPreview.watermarkedR2Key,
+            mimeType: selectedPreview.mimeType,
+            sizeBytes: selectedPreview.sizeBytes,
           }),
         },
       )
 
-      onSuccess(result.requestCode, result.trackingToken)
+      onSuccess(result)
     } catch (err) {
       if (err instanceof ApiError) {
         const body = err.body as Record<string, unknown> | null
@@ -110,14 +104,21 @@ export default function QuoteForm({
     <form onSubmit={handleSubmit(onSubmit)} noValidate>
       <FieldGroup>
         <div className="flex items-center gap-4 rounded-xl border border-border bg-card/50 p-3">
-          <Image
-            src={selectedPreview.dataUrl}
-            alt="Diseño seleccionado"
-            width={80}
-            height={80}
-            unoptimized
-            className="size-20 shrink-0 rounded-lg object-cover shadow-sm"
-          />
+          <div className="relative size-20 shrink-0 overflow-hidden rounded-lg shadow-sm">
+            <Image
+              src={selectedPreview.dataUrl}
+              alt="Diseño seleccionado"
+              width={80}
+              height={80}
+              unoptimized
+              draggable={false}
+              className="size-20 object-cover"
+            />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 select-none bg-[repeating-linear-gradient(-28deg,transparent_0,transparent_22px,rgba(255,255,255,0.18)_24px,rgba(255,255,255,0.18)_26px)]"
+            />
+          </div>
           <div className="min-w-0">
             <p className="font-bebas text-lg tracking-wide leading-tight">
               Tu diseño seleccionado
@@ -183,7 +184,7 @@ export default function QuoteForm({
             {isBusy ? (
               <>
                 <Loader2 className="size-4 animate-spin" />
-                {isUploading ? 'Subiendo imagen…' : 'Enviando solicitud…'}
+                Enviando solicitud…
               </>
             ) : (
               <>
