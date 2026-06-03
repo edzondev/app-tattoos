@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uniqueIndex,
 } from 'drizzle-orm/pg-core'
 
@@ -280,7 +281,7 @@ export const rateLimit = pgTable(
       .defaultNow()
       .$onUpdateFn(() => new Date()),
   },
-  (t) => [uniqueIndex('rate_limit_ip_idx').on(t.ip)],
+  (t) => [unique('rate_limit_ip_idx').on(t.ip)],
 )
 
 // ---------------------------------------------------------------------------
