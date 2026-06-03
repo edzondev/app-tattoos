@@ -10,13 +10,18 @@ import { Button } from '@/modules/core/components/ui/button'
 interface ConfirmationScreenProps {
   requestCode: string
   trackingToken: string
+  fullName: string
+  designUrl: string
 }
 
-function buildWhatsAppUrl(requestCode: string): string {
+function buildWhatsAppUrl(params: {
+  requestCode: string
+  fullName: string
+  trackingUrl: string
+  designUrl: string
+}): string {
   const phone = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? ''
-  const msg = encodeURIComponent(
-    WHATSAPP_TEMPLATES.clientConfirmation(requestCode),
-  )
+  const msg = encodeURIComponent(WHATSAPP_TEMPLATES.clientConfirmation(params))
   const base = phone
     ? `https://wa.me/${phone.replace(/\D/g, '')}`
     : 'https://wa.me/'
@@ -73,6 +78,8 @@ function CopyButton({ text, label, className }: CopyButtonProps) {
 export default function ConfirmationScreen({
   requestCode,
   trackingToken: _trackingToken,
+  fullName,
+  designUrl,
 }: ConfirmationScreenProps) {
   const trackingPath = `/seguimiento/${requestCode}`
   const trackingUrl =
@@ -80,7 +87,12 @@ export default function ConfirmationScreen({
       ? `${window.location.origin}${trackingPath}`
       : trackingPath
 
-  const whatsappUrl = buildWhatsAppUrl(requestCode)
+  const whatsappUrl = buildWhatsAppUrl({
+    requestCode,
+    fullName,
+    trackingUrl,
+    designUrl,
+  })
 
   return (
     <div className="flex flex-col items-center gap-6 py-10 text-center">

@@ -55,6 +55,8 @@ export default function ResultsStep({ requestId }: ResultsStepProps) {
   const [confirmation, setConfirmation] = useState<{
     requestCode: string
     trackingToken: string
+    fullName: string
+    designUrl: string
   } | null>(null)
 
   const {
@@ -93,8 +95,13 @@ export default function ResultsStep({ requestId }: ResultsStepProps) {
     setSubStep('quote')
   }
 
-  const handleQuoteSuccess = (requestCode: string, trackingToken: string) => {
-    setConfirmation({ requestCode, trackingToken })
+  const handleQuoteSuccess = (params: {
+    requestCode: string
+    trackingToken: string
+    fullName: string
+    designUrl: string
+  }) => {
+    setConfirmation(params)
     setSubStep('confirmation')
   }
 
@@ -107,6 +114,8 @@ export default function ResultsStep({ requestId }: ResultsStepProps) {
       <ConfirmationScreen
         requestCode={confirmation.requestCode}
         trackingToken={confirmation.trackingToken}
+        fullName={confirmation.fullName}
+        designUrl={confirmation.designUrl}
       />
     )
   }
@@ -133,8 +142,17 @@ export default function ResultsStep({ requestId }: ResultsStepProps) {
               width={800}
               height={800}
               unoptimized
+              draggable={false}
               className="h-auto w-full object-contain"
             />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 select-none bg-[repeating-linear-gradient(-28deg,transparent_0,transparent_76px,rgba(255,255,255,0.14)_78px,rgba(255,255,255,0.14)_80px)]"
+            >
+              <div className="flex h-full w-full -rotate-12 items-center justify-center font-bebas text-5xl tracking-[0.3em] text-white/20">
+                INKYRA PREVIEW
+              </div>
+            </div>
             {isGenerating && (
               <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-background/60 backdrop-blur-sm">
                 <div className="flex flex-col items-center gap-2">

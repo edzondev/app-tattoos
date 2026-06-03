@@ -148,6 +148,7 @@ export const tattooRequest = pgTable(
     specialInstructions: text('specialInstructions'),
     finalPrompt: text('finalPrompt'),
     selectedImageR2Key: text('selectedImageR2Key'),
+    selectedImageWatermarkedR2Key: text('selectedImageWatermarkedR2Key'),
     selectedImagePublicUrl: text('selectedImagePublicUrl'),
     selectedImageMimeType: text('selectedImageMimeType'),
     selectedImageSizeBytes: integer('selectedImageSizeBytes'),
@@ -160,6 +161,9 @@ export const tattooRequest = pgTable(
     priceCents: integer('priceCents'),
     depositCents: integer('depositCents'),
     depositDueAt: timestamp('depositDueAt'),
+    mpPreferenceId: text('mpPreferenceId'),
+    mpPaymentId: text('mpPaymentId'),
+    paymentStatus: text('paymentStatus'),
     sentAt: timestamp('sentAt'),
     quotedAt: timestamp('quotedAt'),
     depositConfirmedAt: timestamp('depositConfirmedAt'),
@@ -262,18 +266,22 @@ export const portfolioImage = pgTable(
 // Rate limiting
 // ---------------------------------------------------------------------------
 
-export const rateLimit = pgTable('rate_limit', {
-  id: text('id')
-    .primaryKey()
-    .$defaultFn(() => createId()),
-  ip: text('ip').notNull(),
-  attempts: integer('attempts').notNull().default(0),
-  createdAt: timestamp('createdAt').notNull().defaultNow(),
-  updatedAt: timestamp('updatedAt')
-    .notNull()
-    .defaultNow()
-    .$onUpdateFn(() => new Date()),
-})
+export const rateLimit = pgTable(
+  'rate_limit',
+  {
+    id: text('id')
+      .primaryKey()
+      .$defaultFn(() => createId()),
+    ip: text('ip').notNull(),
+    attempts: integer('attempts').notNull().default(0),
+    createdAt: timestamp('createdAt').notNull().defaultNow(),
+    updatedAt: timestamp('updatedAt')
+      .notNull()
+      .defaultNow()
+      .$onUpdateFn(() => new Date()),
+  },
+  (t) => [uniqueIndex('rate_limit_ip_idx').on(t.ip)],
+)
 
 // ---------------------------------------------------------------------------
 // Relations

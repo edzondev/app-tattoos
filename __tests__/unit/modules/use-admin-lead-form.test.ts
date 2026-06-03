@@ -439,15 +439,13 @@ describe('useAdminLeadForm', () => {
 
     it('sets partial result when quote succeeds but status fails', async () => {
       const { ApiError } = await import('@/lib/api')
-      mockApi
-        .mockResolvedValueOnce({})
-        .mockRejectedValueOnce(
-          new ApiError(409, {
-            error: 'invalid_transition',
-            current: 'QUOTED',
-            target: 'FINISHED',
-          }),
-        )
+      mockApi.mockResolvedValueOnce({}).mockRejectedValueOnce(
+        new ApiError(409, {
+          error: 'invalid_transition',
+          current: 'QUOTED',
+          target: 'FINISHED',
+        }),
+      )
 
       const { result } = renderHook(() => useAdminLeadForm(defaultDefaults))
 

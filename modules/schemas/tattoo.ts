@@ -112,6 +112,7 @@ export type QuoteFormInput = z.infer<typeof QuoteFormSchema>
 export const SubmitQuoteSchema = z.object({
   ...QuoteFormSchema.shape,
   r2Key: z.string().min(10),
+  watermarkedR2Key: z.string().min(10),
   mimeType: z.string().min(3),
   sizeBytes: z.number().int().positive(),
 })

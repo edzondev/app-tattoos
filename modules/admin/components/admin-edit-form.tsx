@@ -2,6 +2,7 @@
 
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react'
 import { Controller } from 'react-hook-form'
+import { adminCentsToDisplayValue, adminDisplayValueToCents } from '@/lib/money'
 import { Button } from '@/modules/core/components/ui/button'
 import {
   Field,
@@ -91,13 +92,12 @@ export default function AdminEditForm({ defaults }: Props) {
                 type="number"
                 min={1}
                 step={1}
-                placeholder="Ej: 5000"
+                placeholder="Ej: 150"
                 aria-invalid={fieldState.invalid}
                 disabled={isSubmitting}
-                value={field.value ?? ''}
+                value={adminCentsToDisplayValue(field.value)}
                 onChange={(e) => {
-                  const raw = e.target.value
-                  field.onChange(raw === '' ? undefined : Number(raw))
+                  field.onChange(adminDisplayValueToCents(e.target.value))
                 }}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -117,13 +117,12 @@ export default function AdminEditForm({ defaults }: Props) {
                 type="number"
                 min={1}
                 step={1}
-                placeholder="Ej: 20000"
+                placeholder="Ej: 500"
                 aria-invalid={fieldState.invalid}
                 disabled={isSubmitting}
-                value={field.value ?? ''}
+                value={adminCentsToDisplayValue(field.value)}
                 onChange={(e) => {
-                  const raw = e.target.value
-                  field.onChange(raw === '' ? undefined : Number(raw))
+                  field.onChange(adminDisplayValueToCents(e.target.value))
                 }}
               />
               {fieldState.invalid && <FieldError errors={[fieldState.error]} />}

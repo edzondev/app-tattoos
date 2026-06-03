@@ -8,6 +8,7 @@ import { WHATSAPP_TEMPLATES } from '@/lib/config/brand'
 import { db } from '@/lib/db'
 import { tattooRequest } from '@/lib/db/schema'
 import { getStatusLabel, getStyleLabel } from '@/lib/labels'
+import { formatSolesFromCents } from '@/lib/money'
 import AdminEditForm from '@/modules/admin/components/admin-edit-form'
 import { Button } from '@/modules/core/components/ui/button'
 import { Separator } from '@/modules/core/components/ui/separator'
@@ -16,11 +17,6 @@ type Props = {
   params: Promise<{
     requestCode: string
   }>
-}
-
-function formatCents(cents: number | null | undefined): string {
-  if (!cents) return '—'
-  return `S/ ${(cents / 100).toFixed(0)}`
 }
 
 function buildWhatsAppQuoteUrl(lead: {
@@ -33,8 +29,8 @@ function buildWhatsAppQuoteUrl(lead: {
 }): string {
   const name = lead.fullName ?? 'cliente'
   const code = lead.requestCode ?? lead.trackingToken
-  const total = formatCents(lead.priceCents)
-  const adelanto = formatCents(lead.depositCents)
+  const total = formatSolesFromCents(lead.priceCents)
+  const adelanto = formatSolesFromCents(lead.depositCents)
   const trackingUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/seguimiento/${code}`
 
   const msg = WHATSAPP_TEMPLATES.adminQuote(

@@ -1,1 +1,0 @@
-ALTER TABLE "portfolio_item" ALTER COLUMN "style" SET DEFAULT 'COVER_UP';
